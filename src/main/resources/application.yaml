@@ -1,0 +1,10 @@
+spring:
+  datasource:
+    url: mongodb://root:pokus@localhost:27017/property_register_tvo
+    username: root
+    password: pokus
+
+server:
+  port: 2005
+  servlet:
+    context-path: "/api"
