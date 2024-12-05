@@ -10,4 +10,9 @@ public class InMemoryTaxRateRealization implements TaxRateRepository {
     public List<TaxRate> getAll() {
         return null;
     }
+
+    @Override
+    public void changeTax(String propertyType, TaxRate taxRate) {
+
+    }
 }

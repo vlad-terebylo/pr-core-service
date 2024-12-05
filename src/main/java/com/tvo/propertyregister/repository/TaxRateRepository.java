@@ -6,4 +6,6 @@ import java.util.List;
 
 public interface TaxRateRepository {
     List<TaxRate> getAll();
+
+    void changeTax(String propertyType, TaxRate taxRate);
 }

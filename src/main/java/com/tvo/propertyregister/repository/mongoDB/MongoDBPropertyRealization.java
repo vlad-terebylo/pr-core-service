@@ -7,27 +7,24 @@ import java.util.List;
 
 public class MongoDBPropertyRealization implements PropertyRepository {
     @Override
-    public List<Property> getAllProperties() {
+    public List<Property> getAllProperties(int owner_id) {
         return null;
     }
 
     @Override
-    public Property getById(int id) {
-        return null;
-    }
-
-    @Override
-    public void save(Property property) {
+    public void save(int ownerId, Property property) {
 
     }
 
     @Override
-    public void update(int id, Property property) {
+    public void update(int ownerId, int propertyId, Property property) {
 
     }
 
     @Override
-    public void remove(int id) {
+    public void remove(int ownerId, int propertyId) {
 
     }
+
+
 }

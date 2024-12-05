@@ -10,13 +10,11 @@ import java.util.List;
 
 public interface PropertyRepository {
 
-    List<Property> getAllProperties();
+    List<Property> getAllProperties(int owner_id);
 
-    Property getById(int id);
+    void save(int ownerId, Property property);
 
-    void save(Property property);
+    void update(int ownerId, int propertyId, Property property);
 
-    void update(int id, Property property);
-
-    void remove(int id);
+    void remove(int ownerId, int propertyId);
 }
