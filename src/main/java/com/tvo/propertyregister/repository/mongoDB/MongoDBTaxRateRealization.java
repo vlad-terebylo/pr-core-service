@@ -1,6 +1,7 @@
 package com.tvo.propertyregister.repository.mongoDB;
 
 import com.tvo.propertyregister.model.TaxRate;
+import com.tvo.propertyregister.model.property.PropertyType;
 import com.tvo.propertyregister.repository.TaxRateRepository;
 
 import java.util.List;
@@ -12,7 +13,7 @@ public class MongoDBTaxRateRealization implements TaxRateRepository {
     }
 
     @Override
-    public void changeTax(String propertyType, TaxRate taxRate) {
+    public void changeTax(PropertyType propertyType, TaxRate taxRate) {
 
     }
 }
