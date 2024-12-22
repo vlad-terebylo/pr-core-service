@@ -7,6 +7,7 @@ import com.tvo.propertyregister.service.PropertyService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
@@ -68,6 +69,11 @@ public class OwnerController {
     @DeleteMapping("/{ownerId}/properties/{propertyId}")
     public void remove(@PathVariable int ownerId, @PathVariable int propertyId) {
         this.propertyService.remove(ownerId, propertyId);
+    }
+
+    @GetMapping("/{ownerId}/tax-obligations")
+    public BigDecimal countTaxObligation(@PathVariable int ownerId) {
+        return this.ownerService.countTaxObligation(ownerId);
     }
 
 }
