@@ -1,6 +1,7 @@
 package com.tvo.propertyregister.controller;
 
 import com.tvo.propertyregister.model.TaxRate;
+import com.tvo.propertyregister.model.property.PropertyType;
 import com.tvo.propertyregister.service.TaxRateService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -20,7 +21,7 @@ public class TaxRateController {
     }
 
     @PatchMapping("/{propertyType}")
-    public void changeTax(@PathVariable String propertyType, TaxRate taxRate) {
+    public void changeTax(@PathVariable PropertyType propertyType, TaxRate taxRate) {
         this.taxRateService.changeTax(propertyType, taxRate);
     }
 

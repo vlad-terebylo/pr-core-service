@@ -1,4 +1,4 @@
-package com.tvo.propertyregister.repository.mongoDB;
+package com.tvo.propertyregister.repository.mongodb;
 
 import com.tvo.propertyregister.model.owner.Owner;
 import com.tvo.propertyregister.repository.OwnerRepository;

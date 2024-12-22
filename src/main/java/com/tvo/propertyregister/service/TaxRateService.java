@@ -1,6 +1,7 @@
 package com.tvo.propertyregister.service;
 
 import com.tvo.propertyregister.model.TaxRate;
+import com.tvo.propertyregister.model.property.PropertyType;
 import com.tvo.propertyregister.repository.TaxRateRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -17,7 +18,7 @@ public class TaxRateService {
         return this.taxRateRepository.getAll();
     }
 
-    public void changeTax(String propertyType, TaxRate taxRate) {
+    public void changeTax(PropertyType propertyType, TaxRate taxRate) {
         this.taxRateRepository.changeTax(propertyType, taxRate);
     }
 }

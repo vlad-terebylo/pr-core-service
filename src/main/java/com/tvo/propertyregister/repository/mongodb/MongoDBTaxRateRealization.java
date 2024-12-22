@@ -1,4 +1,4 @@
-package com.tvo.propertyregister.repository.mongoDB;
+package com.tvo.propertyregister.repository.mongodb;
 
 import com.tvo.propertyregister.model.TaxRate;
 import com.tvo.propertyregister.model.property.PropertyType;
