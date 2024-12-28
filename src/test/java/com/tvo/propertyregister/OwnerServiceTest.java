@@ -125,15 +125,8 @@ public class OwnerServiceTest {
 
     @Test
     public void should_count_base_tax_for_owner_having_multiple_properties_with_no_leeway() {
-        // given
 
-        /*
-         * 1) Base tax per flat = 420
-         * 2) Base tax per house = 1600
-         * 3) Base tax per office = 1300
-         * */
-
-        BigDecimal expectedBaseTax = new BigDecimal("3200");
+        BigDecimal expectedBaseTax = new BigDecimal("3320");
 
         // when
         when(taxRateService.getAll()).thenReturn(List.of(
@@ -152,7 +145,7 @@ public class OwnerServiceTest {
     @Test
     public void should_count_base_tax_for_owner_having_single_property_with_multiple_leeway() {
         // given
-        BigDecimal expectedBaseTax = new BigDecimal("336");
+        BigDecimal expectedBaseTax = new BigDecimal("336.0");
 
         // when
         when(taxRateService.getAll()).thenReturn(List.of(

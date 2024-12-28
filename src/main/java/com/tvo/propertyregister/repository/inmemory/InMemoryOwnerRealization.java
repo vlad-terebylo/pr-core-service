@@ -1,6 +1,7 @@
 package com.tvo.propertyregister.repository.inmemory;
 
 import com.tvo.propertyregister.model.owner.Owner;
+import com.tvo.propertyregister.model.property.Property;
 import com.tvo.propertyregister.repository.OwnerRepository;
 
 import java.math.BigDecimal;
@@ -9,6 +10,8 @@ import java.util.List;
 
 public class InMemoryOwnerRealization implements OwnerRepository {
 
+    private static int ownerCounter = 1;
+    private static int propertyCounter = 1;
     private final List<Owner> allOwners = new ArrayList<>();
 
     @Override
@@ -42,6 +45,12 @@ public class InMemoryOwnerRealization implements OwnerRepository {
 
     @Override
     public void save(Owner owner) {
+        owner.setId(ownerCounter++);
+
+        for(Property property: owner.getProperties()){
+            property.setId(propertyCounter++);
+        }
+
         this.allOwners.add(owner);
     }
 

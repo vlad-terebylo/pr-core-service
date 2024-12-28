@@ -45,18 +45,18 @@ public class OwnerController {
 
 
     @PostMapping("/{ownerId}/properties")
-    public void addNewProperty(@PathVariable int ownerId, Property property) {
+    public void addNewProperty(@PathVariable int ownerId, @RequestBody Property property) {
         this.propertyService.addNewProperty(ownerId, property);
     }
 
     @PutMapping("/{id}")
-    public void updateInfo(@PathVariable int id, Owner owner) {
+    public void updateInfo(@PathVariable int id, @RequestBody Owner owner) {
         this.ownerService.updateInfo(id, owner);
     }
 
 
     @PutMapping("/{ownerId}/properties/{propertyId}")
-    public void updatePropertyInfo(@PathVariable int ownerId, @PathVariable int propertyId, Property property) {
+    public void updatePropertyInfo(@PathVariable int ownerId, @PathVariable int propertyId, @RequestBody Property property) {
         this.propertyService.updatePropertyInfo(ownerId, propertyId, property);
     }
 

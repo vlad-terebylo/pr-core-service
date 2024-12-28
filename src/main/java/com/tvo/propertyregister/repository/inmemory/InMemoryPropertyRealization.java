@@ -51,6 +51,8 @@ public class InMemoryPropertyRealization implements PropertyRepository {
 
     private final List<Owner> owners = List.of(ownerFirst, ownerSecond, ownerThird);
 
+    private static int counter = 3;
+
     @Override
     public List<Property> getAllProperties(int ownerId) {
         for (Owner currentOwner : this.owners) {
@@ -64,6 +66,8 @@ public class InMemoryPropertyRealization implements PropertyRepository {
 
     @Override
     public void save(int ownerId, Property property) {
+        property.setId(counter++);
+
         for (Owner currentOwner : this.owners) {
             if (currentOwner.getId() == ownerId) {
                 currentOwner.getProperties().add(property);

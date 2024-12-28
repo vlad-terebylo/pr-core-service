@@ -63,20 +63,20 @@ public class OwnerService {
         List<Property> properties = owner.getProperties();
         List<TaxRate> taxRates = this.taxRateService.getAll();
 
-        BigDecimal FLAT_TAX = taxRates.get(1).getTax();
-        BigDecimal HOUSE_TAX = taxRates.get(2).getTax();
-        BigDecimal OFFICE_TAX = taxRates.get(3).getTax();
+        BigDecimal FLAT_TAX = taxRates.get(0).getTax();
+        BigDecimal HOUSE_TAX = taxRates.get(1).getTax();
+        BigDecimal OFFICE_TAX = taxRates.get(2).getTax();
 
         BigDecimal baseTax = new BigDecimal("0");
 
         for (Property property : properties) {
             BigDecimal square = new BigDecimal(property.getSquare());
             if (property.getPropertyType() == PropertyType.FLAT) {
-                baseTax = baseTax.multiply(square.multiply(FLAT_TAX));
+                baseTax = baseTax.add(square.multiply(FLAT_TAX));
             } else if (property.getPropertyType() == PropertyType.HOUSE) {
-                baseTax = baseTax.multiply(square.multiply(HOUSE_TAX));
+                baseTax = baseTax.add(square.multiply(HOUSE_TAX));
             } else {
-                baseTax = baseTax.multiply(square.multiply(OFFICE_TAX));
+                baseTax = baseTax.add(square.multiply(OFFICE_TAX));
             }
         }
 

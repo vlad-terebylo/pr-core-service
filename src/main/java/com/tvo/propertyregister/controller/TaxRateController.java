@@ -21,7 +21,7 @@ public class TaxRateController {
     }
 
     @PatchMapping("/{propertyType}")
-    public void changeTax(@PathVariable PropertyType propertyType, TaxRate taxRate) {
+    public void changeTax(@PathVariable PropertyType propertyType, @RequestBody TaxRate taxRate) {
         this.taxRateService.changeTax(propertyType, taxRate);
     }
 
