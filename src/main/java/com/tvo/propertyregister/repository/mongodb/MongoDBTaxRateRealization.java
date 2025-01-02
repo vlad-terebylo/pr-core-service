@@ -4,6 +4,7 @@ import com.tvo.propertyregister.model.TaxRate;
 import com.tvo.propertyregister.model.property.PropertyType;
 import com.tvo.propertyregister.repository.TaxRateRepository;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 public class MongoDBTaxRateRealization implements TaxRateRepository {
@@ -13,7 +14,7 @@ public class MongoDBTaxRateRealization implements TaxRateRepository {
     }
 
     @Override
-    public void changeTax(PropertyType propertyType, TaxRate taxRate) {
-
+    public boolean changeTax(PropertyType propertyType, BigDecimal rate) {
+        return true;
     }
 }

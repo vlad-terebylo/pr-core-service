@@ -31,16 +31,16 @@ public class OwnerService {
         return this.ownerRepository.findDebtors();
     }
 
-    public void addNewOwner(Owner owner) {
-        this.ownerRepository.save(owner);
+    public boolean addNewOwner(Owner owner) {
+        return this.ownerRepository.save(owner);
     }
 
-    public void updateInfo(int id, Owner owner) {
-        this.ownerRepository.update(id, owner);
+    public boolean updateInfo(int id, Owner owner) {
+        return this.ownerRepository.update(id, owner);
     }
 
-    public void removeOwner(int id) {
-        this.ownerRepository.remove(id);
+    public boolean removeOwner(int id) {
+        return this.ownerRepository.remove(id);
     }
 
     public BigDecimal countTaxObligation(int id) {
@@ -50,11 +50,16 @@ public class OwnerService {
         BigDecimal taxObligation = countBaseTax(owner);
 
         if (owner.isHasChildren()) {
+            if (FamilyStatus.SINGLE.equals(owner.getFamilyStatus())) {
+                leeway = leeway.subtract(new BigDecimal("0.3"));
+            } else {
+                leeway = leeway.subtract(new BigDecimal("0.1"));
+            }
+        }
+        if (FamilyStatus.MARRIED.equals(owner.getFamilyStatus())) {
             leeway = leeway.subtract(new BigDecimal("0.1"));
         }
-        if (owner.getFamilyStatus() == FamilyStatus.MARRIED) {
-            leeway = leeway.subtract(new BigDecimal("0.1"));
-        }
+
 
         return taxObligation.multiply(leeway);
     }

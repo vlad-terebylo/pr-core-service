@@ -6,6 +6,7 @@ import com.tvo.propertyregister.repository.TaxRateRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -14,11 +15,11 @@ public class TaxRateService {
 
     private final TaxRateRepository taxRateRepository;
 
-    public List<TaxRate> getAll(){
+    public List<TaxRate> getAll() {
         return this.taxRateRepository.getAll();
     }
 
-    public void changeTax(PropertyType propertyType, TaxRate taxRate) {
-        this.taxRateRepository.changeTax(propertyType, taxRate);
+    public boolean changeTax(PropertyType propertyType, BigDecimal rate) {
+        return this.taxRateRepository.changeTax(propertyType, rate);
     }
 }

@@ -20,11 +20,13 @@ public class InMemoryTaxRateRealization implements TaxRateRepository {
     }
 
     @Override
-    public void changeTax(PropertyType propertyType, TaxRate taxRate) {
+    public boolean changeTax(PropertyType propertyType, BigDecimal rate) {
         for (TaxRate currentTaxRate : this.taxRates) {
             if (propertyType == currentTaxRate.getPropertyType()) {
-                currentTaxRate.setTax(taxRate.getTax());
+                currentTaxRate.setTax(rate);
+                return true;
             }
         }
+        return false;
     }
 }

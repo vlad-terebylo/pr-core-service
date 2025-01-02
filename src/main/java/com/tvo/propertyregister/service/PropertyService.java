@@ -17,15 +17,15 @@ public class PropertyService {
         return this.propertyRepository.getAllProperties(ownerId);
     }
 
-    public void addNewProperty(int ownerId, Property property) {
-        this.propertyRepository.save(ownerId, property);
+    public boolean addNewProperty(int ownerId, Property property) {
+        return this.propertyRepository.save(ownerId, property);
     }
 
-    public void updatePropertyInfo(int ownerId, int propertyId, Property property) {
-        this.propertyRepository.update(ownerId, propertyId, property);
+    public boolean updatePropertyInfo(int ownerId, int propertyId, Property property) {
+        return this.propertyRepository.update(ownerId, propertyId, property);
     }
 
-    public void remove(int ownerId, int propertyId) {
-        this.propertyRepository.remove(ownerId, propertyId);
+    public boolean remove(int ownerId, int propertyId) {
+        return this.propertyRepository.remove(ownerId, propertyId);
     }
 }

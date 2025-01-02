@@ -1,13 +1,15 @@
 package com.tvo.propertyregister.controller;
 
+import com.tvo.propertyregister.model.BooleanResponseDto;
+import com.tvo.propertyregister.model.TaxObligationResponseDto;
 import com.tvo.propertyregister.model.owner.Owner;
 import com.tvo.propertyregister.model.property.Property;
 import com.tvo.propertyregister.service.OwnerService;
 import com.tvo.propertyregister.service.PropertyService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
@@ -19,61 +21,61 @@ public class OwnerController {
     private final PropertyService propertyService;
 
     @GetMapping
-    public List<Owner> getAllOwners() {
-        return this.ownerService.getAllOwners();
+    public ResponseEntity<List<Owner>> getAllOwners() {
+        return ResponseEntity.ok(this.ownerService.getAllOwners());
     }
 
     @GetMapping("/{id}")
-    public Owner getOwnerById(@PathVariable int id) {
-        return this.ownerService.getOwnerById(id);
+    public ResponseEntity<Owner> getOwnerById(@PathVariable int id) {
+        return ResponseEntity.ok(this.ownerService.getOwnerById(id));
     }
 
     @GetMapping("/debtors")
-    public List<Owner> getDebtors() {
-        return this.ownerService.findDebtors();
+    public ResponseEntity<List<Owner>> getDebtors() {
+        return ResponseEntity.ok(this.ownerService.findDebtors());
     }
 
     @GetMapping("/{ownerId}/properties")
-    public List<Property> getAll(@PathVariable int ownerId) {
-        return this.propertyService.getAll(ownerId);
+    public ResponseEntity<List<Property>> getAll(@PathVariable int ownerId) {
+        return ResponseEntity.ok(this.propertyService.getAll(ownerId));
     }
 
     @PostMapping
-    public void addNewOwner(@RequestBody Owner owner) {
-        this.ownerService.addNewOwner(owner);
+    public ResponseEntity<BooleanResponseDto> addNewOwner(@RequestBody Owner owner) {
+        return ResponseEntity.ok(new BooleanResponseDto(this.ownerService.addNewOwner(owner)));
     }
 
 
     @PostMapping("/{ownerId}/properties")
-    public void addNewProperty(@PathVariable int ownerId, @RequestBody Property property) {
-        this.propertyService.addNewProperty(ownerId, property);
+    public ResponseEntity<BooleanResponseDto> addNewProperty(@PathVariable int ownerId, @RequestBody Property property) {
+        return ResponseEntity.ok(new BooleanResponseDto(this.propertyService.addNewProperty(ownerId, property)));
     }
 
     @PutMapping("/{id}")
-    public void updateInfo(@PathVariable int id, @RequestBody Owner owner) {
-        this.ownerService.updateInfo(id, owner);
+    public ResponseEntity<BooleanResponseDto> updateInfo(@PathVariable int id, @RequestBody Owner owner) {
+        return ResponseEntity.ok(new BooleanResponseDto(this.ownerService.updateInfo(id, owner)));
     }
 
 
     @PutMapping("/{ownerId}/properties/{propertyId}")
-    public void updatePropertyInfo(@PathVariable int ownerId, @PathVariable int propertyId, @RequestBody Property property) {
-        this.propertyService.updatePropertyInfo(ownerId, propertyId, property);
+    public ResponseEntity<BooleanResponseDto> updatePropertyInfo(@PathVariable int ownerId, @PathVariable int propertyId, @RequestBody Property property) {
+        return ResponseEntity.ok(new BooleanResponseDto(this.propertyService.addNewProperty(propertyId, property)));
     }
 
 
     @DeleteMapping("/{id}")
-    public void removeOwner(@PathVariable int id) {
-        this.ownerService.removeOwner(id);
+    public ResponseEntity<BooleanResponseDto> removeOwner(@PathVariable int id) {
+        return ResponseEntity.ok(new BooleanResponseDto(this.ownerService.removeOwner(id)));
     }
 
     @DeleteMapping("/{ownerId}/properties/{propertyId}")
-    public void remove(@PathVariable int ownerId, @PathVariable int propertyId) {
-        this.propertyService.remove(ownerId, propertyId);
+    public ResponseEntity<BooleanResponseDto> remove(@PathVariable int ownerId, @PathVariable int propertyId) {
+        return ResponseEntity.ok(new BooleanResponseDto(this.propertyService.remove(ownerId, propertyId)));
     }
 
     @GetMapping("/{ownerId}/tax-obligations")
-    public BigDecimal countTaxObligation(@PathVariable int ownerId) {
-        return this.ownerService.countTaxObligation(ownerId);
+    public ResponseEntity<TaxObligationResponseDto> countTaxObligation(@PathVariable int ownerId) {
+        return ResponseEntity.ok(new TaxObligationResponseDto(this.ownerService.countTaxObligation(ownerId)));
     }
 
 }

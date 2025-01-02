@@ -12,9 +12,9 @@ public interface OwnerRepository {
 
     List<Owner> findDebtors();
 
-    void save(Owner owner);
+    boolean save(Owner owner);
 
-    void update(int id, Owner owner);
+    boolean update(int id, Owner owner);
 
-    void remove(int id);
+    boolean remove(int id);
 }

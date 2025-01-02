@@ -44,18 +44,22 @@ public class InMemoryOwnerRealization implements OwnerRepository {
     }
 
     @Override
-    public void save(Owner owner) {
+    public boolean save(Owner owner) {
         owner.setId(ownerCounter++);
 
-        for(Property property: owner.getProperties()){
+        for (Property property : owner.getProperties()) {
             property.setId(propertyCounter++);
         }
 
-        this.allOwners.add(owner);
+        return this.allOwners.add(owner);
     }
 
     @Override
-    public void update(int id, Owner owner) {
+    public boolean update(int id, Owner owner) {
+        for (Property property : owner.getProperties()) {
+            property.setId(propertyCounter++);
+        }
+
         for (Owner currentOwner : this.allOwners) {
             if (currentOwner.getId() == id) {
                 currentOwner.setFirstName(owner.getFirstName());
@@ -66,12 +70,14 @@ public class InMemoryOwnerRealization implements OwnerRepository {
                 currentOwner.setPhoneNumber(owner.getPhoneNumber());
                 currentOwner.setTaxesDept(owner.getTaxesDept());
                 currentOwner.setProperties(owner.getProperties());
+                return true;
             }
         }
+        return false;
     }
 
     @Override
-    public void remove(int id) {
-        this.allOwners.removeIf(owner -> owner.getId() == id);
+    public boolean remove(int id) {
+        return this.allOwners.removeIf(owner -> owner.getId() == id);
     }
 }

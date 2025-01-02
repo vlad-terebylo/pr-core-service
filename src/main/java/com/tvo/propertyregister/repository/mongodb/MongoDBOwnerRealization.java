@@ -22,17 +22,17 @@ public class MongoDBOwnerRealization implements OwnerRepository {
     }
 
     @Override
-    public void save(Owner owner) {
-
+    public boolean save(Owner owner) {
+        return true;
     }
 
     @Override
-    public void update(int id, Owner owner) {
-
+    public boolean update(int id, Owner owner) {
+        return true;
     }
 
     @Override
-    public void remove(int id) {
-
+    public boolean remove(int id) {
+        return true;
     }
 }

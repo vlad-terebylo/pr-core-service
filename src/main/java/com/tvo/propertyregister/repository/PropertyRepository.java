@@ -12,9 +12,9 @@ public interface PropertyRepository {
 
     List<Property> getAllProperties(int owner_id);
 
-    void save(int ownerId, Property property);
+    boolean save(int ownerId, Property property);
 
-    void update(int ownerId, int propertyId, Property property);
+    boolean update(int ownerId, int propertyId, Property property);
 
-    void remove(int ownerId, int propertyId);
+    boolean remove(int ownerId, int propertyId);
 }

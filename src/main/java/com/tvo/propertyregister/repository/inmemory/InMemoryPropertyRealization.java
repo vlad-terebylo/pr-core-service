@@ -65,18 +65,19 @@ public class InMemoryPropertyRealization implements PropertyRepository {
     }
 
     @Override
-    public void save(int ownerId, Property property) {
+    public boolean save(int ownerId, Property property) {
         property.setId(counter++);
 
         for (Owner currentOwner : this.owners) {
             if (currentOwner.getId() == ownerId) {
-                currentOwner.getProperties().add(property);
+                return currentOwner.getProperties().add(property);
             }
         }
+        return false;
     }
 
     @Override
-    public void update(int ownerId, int propertyId, Property property) {
+    public boolean update(int ownerId, int propertyId, Property property) {
         for (Owner currentOwner : this.owners) {
             if (currentOwner.getId() == ownerId) {
                 for (Property currentProperty : currentOwner.getProperties()) {
@@ -84,19 +85,22 @@ public class InMemoryPropertyRealization implements PropertyRepository {
                         currentProperty.setNumberOfRooms(property.getNumberOfRooms());
                         currentProperty.setCost(property.getCost());
                         currentProperty.setDateOfBecomingOwner(property.getDateOfBecomingOwner());
+                        return true;
                     }
                 }
             }
         }
+        return false;
     }
 
     @Override
-    public void remove(int ownerId, int propertyId) {
+    public boolean remove(int ownerId, int propertyId) {
         for (Owner currentOwner : this.owners) {
             if (currentOwner.getId() == ownerId) {
-                currentOwner.getProperties().removeIf(currentProperty -> currentProperty.getId() == propertyId);
+                return currentOwner.getProperties().removeIf(currentProperty -> currentProperty.getId() == propertyId);
             }
         }
+        return false;
     }
 
 }

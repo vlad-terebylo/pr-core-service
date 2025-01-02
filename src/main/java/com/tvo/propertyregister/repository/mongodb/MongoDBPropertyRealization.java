@@ -12,18 +12,18 @@ public class MongoDBPropertyRealization implements PropertyRepository {
     }
 
     @Override
-    public void save(int ownerId, Property property) {
-
+    public boolean save(int ownerId, Property property) {
+        return true;
     }
 
     @Override
-    public void update(int ownerId, int propertyId, Property property) {
-
+    public boolean update(int ownerId, int propertyId, Property property) {
+        return true;
     }
 
     @Override
-    public void remove(int ownerId, int propertyId) {
-
+    public boolean remove(int ownerId, int propertyId) {
+        return true;
     }
 
 
