@@ -53,6 +53,13 @@ public class OwnerServiceTest {
             LocalDate.of(1994, 8, 9),
             new BigDecimal("0"), List.of(PROPERTY_FLAT, PROPERTY_HOUSE, PROPERTY_OFFICE));
 
+    private static final Owner OWNER_2 = new Owner(3, "Carel", "Capek",
+            36, FamilyStatus.SINGLE,
+            true, "carelcapek@gmail.com",
+            "+420098465743",
+            LocalDate.of(1994, 8, 9),
+            new BigDecimal("0"), List.of(PROPERTY_HOUSE));
+
     private static final Owner DEBTOR = new Owner(2, "Linda", "Johnson",
             31, FamilyStatus.MARRIED,
             true, "lindajohnson@gmail.com",
@@ -161,4 +168,20 @@ public class OwnerServiceTest {
         assertEquals(expectedBaseTax, baseTaxResult);
     }
 
+    @Test
+    public void should_count_base_tax_for_owner_having_single_property() {
+        BigDecimal expectedTaxObligation = new BigDecimal("1120.0");
+
+        when(taxRateService.getAll()).thenReturn(List.of(
+                TAX_RATE_FLAT,
+                TAX_RATE_HOUSE,
+                TAX_RATE_OFFICE
+        ));
+
+        when(ownerRepository.findById(OWNER_2.getId())).thenReturn(OWNER_2);
+
+        BigDecimal taxObligationResult = ownerService.countTaxObligation(OWNER_2.getId());
+
+        assertEquals(expectedTaxObligation, taxObligationResult);
+    }
 }

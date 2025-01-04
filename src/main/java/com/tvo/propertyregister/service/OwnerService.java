@@ -60,7 +60,6 @@ public class OwnerService {
             leeway = leeway.subtract(new BigDecimal("0.1"));
         }
 
-
         return taxObligation.multiply(leeway);
     }
 
