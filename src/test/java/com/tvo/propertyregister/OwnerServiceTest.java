@@ -184,4 +184,17 @@ public class OwnerServiceTest {
 
         assertEquals(expectedTaxObligation, taxObligationResult);
     }
+
+    @Test
+    void should_recalculate_debt_for_debtors() {
+        List<Owner> allDebtors = List.of(DEBTOR);
+        Owner expectedDebtor = allDebtors.get(0).withTaxesDept(allDebtors.get(0).getTaxesDept().multiply(new BigDecimal("1.05")));
+
+        when(ownerRepository.findDebtors()).thenReturn(allDebtors);
+
+        ownerService.recountDebtForDebtors();
+
+        verify(ownerRepository, times(1)).findDebtors();
+        verify(ownerRepository, times(1)).update(DEBTOR.getId(), expectedDebtor);
+    }
 }

@@ -31,6 +31,17 @@ public class OwnerService {
         return this.ownerRepository.findDebtors();
     }
 
+    public void recountDebtForDebtors() {
+        List<Owner> allDebtors = this.ownerRepository.findDebtors();
+
+        allDebtors.stream()
+                .map(debtor -> {
+                    BigDecimal recalculatedDebt = debtor.getTaxesDept().multiply(new BigDecimal("1.05"));
+                    return debtor.withTaxesDept(recalculatedDebt);
+                })
+                .forEach(updatedDebtor -> ownerRepository.update(updatedDebtor.getId(), updatedDebtor));
+    }
+
     public boolean addNewOwner(Owner owner) {
         return this.ownerRepository.save(owner);
     }
@@ -86,4 +97,7 @@ public class OwnerService {
 
         return baseTax;
     }
+
+
+    // Todo: new method to add new property to owner's property list
 }
