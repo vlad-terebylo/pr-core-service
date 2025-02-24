@@ -1,4 +1,4 @@
-package com.tvo.propertyregister.model;
+package com.tvo.propertyregister.model.dto;
 
 import java.math.BigDecimal;
 

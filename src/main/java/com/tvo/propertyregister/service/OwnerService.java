@@ -1,5 +1,6 @@
 package com.tvo.propertyregister.service;
 
+import com.fasterxml.jackson.databind.annotation.JsonAppend;
 import com.tvo.propertyregister.model.TaxRate;
 import com.tvo.propertyregister.model.owner.FamilyStatus;
 import com.tvo.propertyregister.model.owner.Owner;
@@ -97,7 +98,4 @@ public class OwnerService {
 
         return baseTax;
     }
-
-
-    // Todo: new method to add new property to owner's property list
 }

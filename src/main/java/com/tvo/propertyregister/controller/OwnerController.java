@@ -1,7 +1,7 @@
 package com.tvo.propertyregister.controller;
 
-import com.tvo.propertyregister.model.BooleanResponseDto;
-import com.tvo.propertyregister.model.TaxObligationResponseDto;
+import com.tvo.propertyregister.model.dto.BooleanResponseDto;
+import com.tvo.propertyregister.model.dto.TaxObligationResponseDto;
 import com.tvo.propertyregister.model.owner.Owner;
 import com.tvo.propertyregister.model.property.Property;
 import com.tvo.propertyregister.service.OwnerService;
@@ -45,7 +45,6 @@ public class OwnerController {
         return ResponseEntity.ok(new BooleanResponseDto(this.ownerService.addNewOwner(owner)));
     }
 
-
     @PostMapping("/{ownerId}/properties")
     public ResponseEntity<BooleanResponseDto> addNewProperty(@PathVariable int ownerId, @RequestBody Property property) {
         return ResponseEntity.ok(new BooleanResponseDto(this.propertyService.addNewProperty(ownerId, property)));
@@ -56,12 +55,10 @@ public class OwnerController {
         return ResponseEntity.ok(new BooleanResponseDto(this.ownerService.updateInfo(id, owner)));
     }
 
-
     @PutMapping("/{ownerId}/properties/{propertyId}")
     public ResponseEntity<BooleanResponseDto> updatePropertyInfo(@PathVariable int ownerId, @PathVariable int propertyId, @RequestBody Property property) {
-        return ResponseEntity.ok(new BooleanResponseDto(this.propertyService.addNewProperty(propertyId, property)));
+        return ResponseEntity.ok(new BooleanResponseDto(this.propertyService.updatePropertyInfo(ownerId, propertyId, property)));
     }
-
 
     @DeleteMapping("/{id}")
     public ResponseEntity<BooleanResponseDto> removeOwner(@PathVariable int id) {
@@ -77,5 +74,4 @@ public class OwnerController {
     public ResponseEntity<TaxObligationResponseDto> countTaxObligation(@PathVariable int ownerId) {
         return ResponseEntity.ok(new TaxObligationResponseDto(this.ownerService.countTaxObligation(ownerId)));
     }
-
 }

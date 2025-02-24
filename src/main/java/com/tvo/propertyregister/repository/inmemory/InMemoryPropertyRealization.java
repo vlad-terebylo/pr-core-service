@@ -1,5 +1,7 @@
 package com.tvo.propertyregister.repository.inmemory;
 
+import com.tvo.propertyregister.exception.NoSuchOwnerException;
+import com.tvo.propertyregister.exception.PropertyNotFoundException;
 import com.tvo.propertyregister.model.owner.FamilyStatus;
 import com.tvo.propertyregister.model.owner.Owner;
 import com.tvo.propertyregister.model.property.Property;
@@ -61,7 +63,7 @@ public class InMemoryPropertyRealization implements PropertyRepository {
             }
         }
 
-        return null;
+        throw new NoSuchOwnerException("Owner with id: %s does not exists!".formatted(ownerId));
     }
 
     @Override
@@ -73,25 +75,28 @@ public class InMemoryPropertyRealization implements PropertyRepository {
                 return currentOwner.getProperties().add(property);
             }
         }
-        return false;
+        throw new NoSuchOwnerException("Owner with id: %s does not exists!".formatted(ownerId));
     }
 
     @Override
     public boolean update(int ownerId, int propertyId, Property property) {
-        for (Owner currentOwner : this.owners) {
-            if (currentOwner.getId() == ownerId) {
-                for (Property currentProperty : currentOwner.getProperties()) {
-                    if (currentProperty.getId() == propertyId) {
-                        currentProperty.setNumberOfRooms(property.getNumberOfRooms());
-                        currentProperty.setCost(property.getCost());
-                        currentProperty.setDateOfBecomingOwner(property.getDateOfBecomingOwner());
-                        return true;
-                    }
-                }
-            }
-        }
-        return false;
+        Owner owner = this.owners.stream()
+                .filter(o -> o.getId() == ownerId)
+                .findFirst()
+                .orElseThrow(() -> new NoSuchOwnerException("Owner with id: %s not found".formatted(ownerId)));
+
+        Property currentProperty = owner.getProperties().stream()
+                .filter(p -> p.getId() == propertyId)
+                .findFirst()
+                .orElseThrow(() -> new PropertyNotFoundException("Property with id: %s not found for owner with id: %s".formatted(propertyId, owner)));
+
+        currentProperty.setNumberOfRooms(property.getNumberOfRooms());
+        currentProperty.setCost(property.getCost());
+        currentProperty.setDateOfBecomingOwner(property.getDateOfBecomingOwner());
+
+        return true;
     }
+
 
     @Override
     public boolean remove(int ownerId, int propertyId) {
@@ -100,7 +105,7 @@ public class InMemoryPropertyRealization implements PropertyRepository {
                 return currentOwner.getProperties().removeIf(currentProperty -> currentProperty.getId() == propertyId);
             }
         }
-        return false;
+        throw new NoSuchOwnerException("Owner with id: %s does not exists!".formatted(ownerId));
     }
 
 }

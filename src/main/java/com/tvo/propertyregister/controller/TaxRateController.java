@@ -1,7 +1,7 @@
 package com.tvo.propertyregister.controller;
 
-import com.tvo.propertyregister.model.BooleanResponseDto;
-import com.tvo.propertyregister.model.ChangeTaxRateRequest;
+import com.tvo.propertyregister.model.dto.BooleanResponseDto;
+import com.tvo.propertyregister.model.dto.ChangeTaxRateRequest;
 import com.tvo.propertyregister.model.TaxRate;
 import com.tvo.propertyregister.model.property.PropertyType;
 import com.tvo.propertyregister.service.TaxRateService;

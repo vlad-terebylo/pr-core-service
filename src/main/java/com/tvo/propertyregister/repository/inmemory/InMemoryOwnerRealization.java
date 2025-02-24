@@ -1,5 +1,7 @@
 package com.tvo.propertyregister.repository.inmemory;
 
+import com.tvo.propertyregister.exception.NoSuchOwnerException;
+import com.tvo.propertyregister.exception.UpdateOwnerFailedException;
 import com.tvo.propertyregister.model.owner.Owner;
 import com.tvo.propertyregister.model.property.Property;
 import com.tvo.propertyregister.repository.OwnerRepository;
@@ -27,7 +29,7 @@ public class InMemoryOwnerRealization implements OwnerRepository {
             }
         }
 
-        return null;
+        throw new NoSuchOwnerException("Owner with id: %s does not exists!".formatted(id));
     }
 
     @Override
@@ -73,7 +75,8 @@ public class InMemoryOwnerRealization implements OwnerRepository {
                 return true;
             }
         }
-        return false;
+
+        throw new UpdateOwnerFailedException("Failed updating owner with id: %s".formatted(id));
     }
 
     @Override

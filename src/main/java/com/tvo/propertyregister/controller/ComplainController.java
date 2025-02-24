@@ -1,6 +1,6 @@
 package com.tvo.propertyregister.controller;
 
-import com.tvo.propertyregister.model.BooleanResponseDto;
+import com.tvo.propertyregister.model.dto.BooleanResponseDto;
 import com.tvo.propertyregister.model.Complain;
 import com.tvo.propertyregister.service.ComplainService;
 import lombok.RequiredArgsConstructor;

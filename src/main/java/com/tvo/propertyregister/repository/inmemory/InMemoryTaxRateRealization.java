@@ -1,5 +1,6 @@
 package com.tvo.propertyregister.repository.inmemory;
 
+import com.tvo.propertyregister.exception.PropertyTypeDoesNotExistException;
 import com.tvo.propertyregister.model.TaxRate;
 import com.tvo.propertyregister.model.property.PropertyType;
 import com.tvo.propertyregister.repository.TaxRateRepository;
@@ -27,6 +28,7 @@ public class InMemoryTaxRateRealization implements TaxRateRepository {
                 return true;
             }
         }
-        return false;
+
+        throw new PropertyTypeDoesNotExistException("The property type " + propertyType.name() + " does not exists");
     }
 }

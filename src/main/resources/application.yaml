@@ -1,8 +1,15 @@
 spring:
+  application:
+    name: property-register-service
   datasource:
     url: mongodb://root:pokus@localhost:27017/property_register_tvo
     username: root
     password: pokus
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
 
 server:
   port: 2005
