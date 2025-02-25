@@ -19,11 +19,11 @@ public class DebtorNotificationService {
     private final OwnerRepository ownerRepository;
     private final EmailSender emailSender;
 
-    public boolean enqueueDebtorNotifications() {
-        List<Owner> allDebtors = this.ownerRepository.findDebtors();
+    public boolean notifyAllDebtors() {
+        List<Owner> debtors = this.ownerRepository.findDebtors();
 
-        for (Owner debtor : allDebtors) {
-            EmailEventDto message = new EmailEventDto(
+        for (Owner debtor : debtors) {
+            EmailEventDto emailEvent = new EmailEventDto(
                     debtor.getEmail(),
                     debtor.getFirstName(),
                     debtor.getLastName(),
@@ -31,7 +31,7 @@ public class DebtorNotificationService {
                     EmailType.ALL_DEBTOR_NOTIFICATION
             );
 
-            emailSender.send(message);
+            emailSender.send(emailEvent);
         }
 
         return true;
@@ -43,7 +43,7 @@ public class DebtorNotificationService {
             throw new DontHaveTaxDebtsException("Does not exists or his tax debt is lower or equals zero!");
         }
 
-        EmailEventDto message = new EmailEventDto(
+        EmailEventDto emailEvent = new EmailEventDto(
                 debtor.getEmail(),
                 debtor.getFirstName(),
                 debtor.getLastName(),
@@ -51,7 +51,7 @@ public class DebtorNotificationService {
                 EmailType.SINGLE_DEBTOR_NOTIFICATION
         );
 
-        emailSender.send(message);
+        emailSender.send(emailEvent);
 
         return true;
     }

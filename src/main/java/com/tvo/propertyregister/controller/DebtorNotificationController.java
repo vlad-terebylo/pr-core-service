@@ -18,7 +18,7 @@ public class DebtorNotificationController {
 
     @PostMapping
     public ResponseEntity<BooleanResponseDto> notifyAllDebtors() {
-        return ResponseEntity.ok(new BooleanResponseDto(debtorNotificationService.enqueueDebtorNotifications()));
+        return ResponseEntity.ok(new BooleanResponseDto(debtorNotificationService.notifyAllDebtors()));
     }
 
     @PostMapping("/{id}")

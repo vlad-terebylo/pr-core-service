@@ -1,10 +1,8 @@
 package com.tvo.propertyregister.config;
 
-import com.tvo.propertyregister.repository.ComplainRepository;
 import com.tvo.propertyregister.repository.OwnerRepository;
 import com.tvo.propertyregister.repository.PropertyRepository;
 import com.tvo.propertyregister.repository.TaxRateRepository;
-import com.tvo.propertyregister.repository.inmemory.InMemoryComplainRepository;
 import com.tvo.propertyregister.repository.inmemory.InMemoryOwnerRealization;
 import com.tvo.propertyregister.repository.inmemory.InMemoryPropertyRealization;
 import com.tvo.propertyregister.repository.inmemory.InMemoryTaxRateRealization;
@@ -27,10 +25,5 @@ public class AppConfig {
     @Bean
     public PropertyRepository propertyRealization() {
         return new InMemoryPropertyRealization();
-    }
-
-    @Bean
-    public ComplainRepository complainRealization() {
-        return new InMemoryComplainRepository();
     }
 }
