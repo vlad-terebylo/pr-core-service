@@ -1,12 +1,10 @@
 package com.tvo.propertyregister.model.dto;
 
 import java.io.Serializable;
-import java.math.BigDecimal;
+import java.util.Map;
 
 public record EmailEventDto(
         String email,
-        String firstName,
-        String lastName,
-        BigDecimal debt,
-        EmailType type) implements Serializable {
+        EmailType type,
+        Map<String, String> params) implements Serializable {
 }

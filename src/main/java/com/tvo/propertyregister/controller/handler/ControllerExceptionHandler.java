@@ -1,9 +1,6 @@
 package com.tvo.propertyregister.controller.handler;
 
-import com.tvo.propertyregister.exception.DontHaveTaxDebtsException;
-import com.tvo.propertyregister.exception.NoSuchOwnerException;
-import com.tvo.propertyregister.exception.PropertyTypeDoesNotExistException;
-import com.tvo.propertyregister.exception.UpdateOwnerFailedException;
+import com.tvo.propertyregister.exception.*;
 import com.tvo.propertyregister.model.dto.ErrorDto;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
@@ -50,5 +47,12 @@ public class ControllerExceptionHandler extends ResponseEntityExceptionHandler {
         ErrorDto error = new ErrorDto(NOT_FOUND.getReasonPhrase(), exception.getMessage());
 
         return super.handleExceptionInternal(exception, error, new HttpHeaders(), NOT_FOUND, request);
+    }
+
+    @ExceptionHandler(value = NoDebtorsInDebtorListException.class)
+    public ResponseEntity<Object> handleNoDebtorsInDebtorListException(Exception exception, WebRequest request) {
+        ErrorDto error = new ErrorDto(NO_CONTENT.getReasonPhrase(), exception.getMessage());
+
+        return super.handleExceptionInternal(exception, error, new HttpHeaders(), NO_CONTENT, request);
     }
 }

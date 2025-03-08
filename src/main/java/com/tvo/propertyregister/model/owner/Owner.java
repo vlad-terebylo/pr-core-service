@@ -26,4 +26,14 @@ public class Owner {
     private LocalDate birthday;
     private BigDecimal taxesDept;
     private List<Property> properties;
+
+    public Owner(int id, String email, String firstName, String lastName, BigDecimal taxesDept, boolean hasChildren, FamilyStatus familyStatus) {
+        this.id = id;
+        this.email = email;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.taxesDept = taxesDept;
+        this.hasChildren = hasChildren;
+        this.familyStatus = familyStatus;
+    }
 }
