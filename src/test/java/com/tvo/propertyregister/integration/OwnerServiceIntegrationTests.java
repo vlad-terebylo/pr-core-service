@@ -161,7 +161,7 @@ public class OwnerServiceIntegrationTests {
     }
 
     @Test
-    void testRecountDebtForDebtors_singleDebtor() {
+    void should_recount_debt_for_debtors_when_in_list_single_debtor() {
         Owner debtor = new Owner(1, "Frank", "John",
                 30, FamilyStatus.SINGLE,
                 false, "frankjohn@gmail.com",
@@ -180,7 +180,7 @@ public class OwnerServiceIntegrationTests {
     }
 
     @Test
-    void testRecountDebtForDebtors_multipleDebtors() {
+    void should_recount_debt_for_debtors_when_in_list_two_or_more_debtors() {
         Owner debtor = new Owner(1, "Frank", "John",
                 30, FamilyStatus.SINGLE,
                 false, "frankjohn@gmail.com",
@@ -209,7 +209,7 @@ public class OwnerServiceIntegrationTests {
     }
 
     @Test
-    void testRecountDebtForDebtors_mixedOwners() {
+    void should_recount_debt_for_debtors_when_in_list_debtors_and_owners_without_debts() {
         Owner debtor = new Owner(1, "Frank", "John",
                 30, FamilyStatus.SINGLE,
                 false, "frankjohn@gmail.com",
