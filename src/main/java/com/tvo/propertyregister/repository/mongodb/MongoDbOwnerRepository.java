@@ -5,7 +5,7 @@ import com.tvo.propertyregister.repository.OwnerRepository;
 
 import java.util.List;
 
-public class MongoDBOwnerRealization implements OwnerRepository {
+public class MongoDbOwnerRepository implements OwnerRepository {
     @Override
     public List<Owner> getAllOwners() {
         return null;
@@ -34,5 +34,10 @@ public class MongoDBOwnerRealization implements OwnerRepository {
     @Override
     public boolean remove(int id) {
         return true;
+    }
+
+    @Override
+    public void clear() {
+
     }
 }

@@ -7,7 +7,7 @@ import com.tvo.propertyregister.repository.TaxRateRepository;
 import java.math.BigDecimal;
 import java.util.List;
 
-public class MongoDBTaxRateRealization implements TaxRateRepository {
+public class MongoDbTaxRateRepository implements TaxRateRepository {
     @Override
     public List<TaxRate> getAll() {
         return null;

@@ -1,4 +1,4 @@
-package com.tvo.propertyregister;
+package com.tvo.propertyregister.unit;
 
 import com.tvo.propertyregister.model.owner.FamilyStatus;
 import com.tvo.propertyregister.model.owner.Owner;

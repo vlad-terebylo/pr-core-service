@@ -13,7 +13,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
-public class InMemoryPropertyRealization implements PropertyRepository {
+public class InMemoryPropertyRepository implements PropertyRepository {
 
     private final Property propertyFirst = new Property(
             1, PropertyType.FLAT, "Prague", "Heroev Street 24",

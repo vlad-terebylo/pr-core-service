@@ -17,4 +17,6 @@ public interface OwnerRepository {
     boolean update(int id, Owner owner);
 
     boolean remove(int id);
+
+    void clear();
 }

@@ -8,7 +8,7 @@ import com.tvo.propertyregister.repository.TaxRateRepository;
 import java.math.BigDecimal;
 import java.util.List;
 
-public class InMemoryTaxRateRealization implements TaxRateRepository {
+public class InMemoryTaxRateRepository implements TaxRateRepository {
 
     private List<TaxRate> taxRates = List.of(
             new TaxRate(1, PropertyType.FLAT, new BigDecimal("6")),

@@ -5,7 +5,7 @@ import com.tvo.propertyregister.repository.PropertyRepository;
 
 import java.util.List;
 
-public class MongoDBPropertyRealization implements PropertyRepository {
+public class MongoDbPropertyRepository implements PropertyRepository {
     @Override
     public List<Property> getAllProperties(int owner_id) {
         return null;

@@ -10,7 +10,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
-public class InMemoryOwnerRealization implements OwnerRepository {
+public class InMemoryOwnerRepository implements OwnerRepository {
 
     private static int ownerCounter = 1;
     private static int propertyCounter = 1;
@@ -82,5 +82,12 @@ public class InMemoryOwnerRealization implements OwnerRepository {
     @Override
     public boolean remove(int id) {
         return this.allOwners.removeIf(owner -> owner.getId() == id);
+    }
+
+    @Override
+    public void clear() {
+        this.allOwners.clear();
+        ownerCounter = 1;
+        propertyCounter = 1;
     }
 }
