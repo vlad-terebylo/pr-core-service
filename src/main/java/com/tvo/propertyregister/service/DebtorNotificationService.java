@@ -5,7 +5,6 @@ import com.tvo.propertyregister.exception.NoDebtorsInDebtorListException;
 import com.tvo.propertyregister.model.dto.EmailEventDto;
 import com.tvo.propertyregister.model.dto.EmailType;
 import com.tvo.propertyregister.model.owner.Owner;
-import com.tvo.propertyregister.repository.OwnerRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -19,11 +18,11 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class DebtorNotificationService {
 
-    private final OwnerRepository ownerRepository;
+    private final OwnerService ownerService;
     private final EmailSender emailSender;
 
     public boolean notifyAllDebtors() {
-        List<Owner> debtors = this.ownerRepository.findDebtors();
+        List<Owner> debtors = this.ownerService.findDebtors();
         Map<String, String> params = new HashMap<>();
         params.put("numberOfDebtors", String.valueOf(debtors.size()));
 
@@ -49,7 +48,7 @@ public class DebtorNotificationService {
     }
 
     public boolean notifyDebtorById(int id) {
-        Owner debtor = this.ownerRepository.findById(id);
+        Owner debtor = this.ownerService.getOwnerById(id);
         if (debtor.getTaxesDept().compareTo(new BigDecimal("0")) <= 0) {
             throw new DontHaveTaxDebtsException("Does not exists or his tax debt is lower or equals zero!");
         }

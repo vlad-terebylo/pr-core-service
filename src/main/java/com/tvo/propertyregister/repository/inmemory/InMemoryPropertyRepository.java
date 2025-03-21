@@ -108,4 +108,8 @@ public class InMemoryPropertyRepository implements PropertyRepository {
         throw new NoSuchOwnerException("Owner with id: %s does not exists!".formatted(ownerId));
     }
 
+    @Override
+    public void clear() {
+
+    }
 }

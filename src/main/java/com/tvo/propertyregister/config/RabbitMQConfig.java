@@ -9,8 +9,8 @@ import org.springframework.context.annotation.Configuration;
 @EnableRabbit
 public class RabbitMQConfig {
 
-//    @Bean
-//    public Queue emailQueue() {
-//        return new Queue("email-queue", true);
-//    }
+    @Bean
+    public Queue emailQueue() {
+        return new Queue("email-queue", true);
+    }
 }

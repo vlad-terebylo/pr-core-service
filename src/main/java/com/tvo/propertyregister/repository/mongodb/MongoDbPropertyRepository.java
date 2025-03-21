@@ -26,5 +26,10 @@ public class MongoDbPropertyRepository implements PropertyRepository {
         return true;
     }
 
+    @Override
+    public void clear() {
+
+    }
+
 
 }

@@ -35,6 +35,7 @@ public class OwnerService {
         List<Owner> allDebtors = this.ownerRepository.findDebtors();
 
         allDebtors.stream()
+                .filter(debtor -> debtor.getTaxesDept().compareTo(new BigDecimal("0")) > 0)
                 .map(debtor -> {
                     BigDecimal recalculatedDebt = debtor.getTaxesDept().multiply(new BigDecimal("1.05"));
                     return debtor.withTaxesDept(recalculatedDebt);

@@ -17,4 +17,9 @@ public class MongoDbTaxRateRepository implements TaxRateRepository {
     public boolean changeTax(PropertyType propertyType, BigDecimal rate) {
         return true;
     }
+
+    @Override
+    public void init() {
+
+    }
 }

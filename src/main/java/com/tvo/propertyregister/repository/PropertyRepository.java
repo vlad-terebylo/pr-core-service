@@ -17,4 +17,6 @@ public interface PropertyRepository {
     boolean update(int ownerId, int propertyId, Property property);
 
     boolean remove(int ownerId, int propertyId);
+
+    void clear();
 }
