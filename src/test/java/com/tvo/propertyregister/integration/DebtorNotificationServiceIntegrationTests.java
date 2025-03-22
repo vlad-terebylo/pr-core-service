@@ -33,7 +33,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import static com.tvo.propertyregister.service.utils.Constants.EMAIL_TOPIC;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -61,6 +61,12 @@ public class DebtorNotificationServiceIntegrationTests {
             LocalDate.of(2012, 1, 9),
             PropertyCondition.GOOD);
 
+    private static final Property HOUSE_2 = new Property(3, PropertyType.HOUSE, "Prague", "Evropska 6",
+            300, 10, new BigDecimal("1000000"),
+            LocalDate.of(2023, 4, 10),
+            LocalDate.of(2023, 1, 9),
+            PropertyCondition.GOOD);
+
     private static final RabbitMQContainer RABBIT_MQ_CONTAINER =
             new RabbitMQContainer("rabbitmq:3.9-management");
 
@@ -77,13 +83,23 @@ public class DebtorNotificationServiceIntegrationTests {
     }
 
     @Test
-    void should_send_notification_to_all_debtors() {
+    void should_send_notification_to_all_debtors() throws JsonProcessingException {
         Owner debtor = new Owner(1, "Frank", "John",
                 30, FamilyStatus.SINGLE,
                 false, "frankjohn@gmail.com",
                 "+456987123",
                 LocalDate.of(1994, 5, 9),
                 new BigDecimal("10000"), List.of(HOUSE_1));
+
+        EmailEventDto expectedEmailDto = new EmailEventDto(
+                debtor.getEmail(),
+                EmailType.ALL_DEBTOR_NOTIFICATION,
+                Map.of("firstName", debtor.getFirstName(),
+                        "lastName", debtor.getLastName(),
+                        "debt", String.valueOf(debtor.getTaxesDept()),
+                        "numberOfDebtors", String.valueOf(1)
+                )
+        );
 
         ownerRepository.save(debtor);
 
@@ -92,6 +108,104 @@ public class DebtorNotificationServiceIntegrationTests {
         String body = (String) rabbitTemplate.receiveAndConvert(EMAIL_TOPIC);
 
         assertTrue(Objects.nonNull(body));
+
+        EmailEventDto receivedEmailDto = mapper.readValue(body, EmailEventDto.class);
+
+        assertEquals(expectedEmailDto, receivedEmailDto);
+    }
+
+    @Test
+    void should_send_notification_if_there_is_more_than_one_debtor() throws JsonProcessingException {
+        Owner debtor1 = new Owner(1, "Frank", "John",
+                30, FamilyStatus.SINGLE,
+                false, "frankjohn@gmail.com",
+                "+456987123",
+                LocalDate.of(1994, 5, 9),
+                new BigDecimal("10000"), List.of(HOUSE_1));
+
+        Owner debtor2 = new Owner(2, "Alice", "Wonder",
+                28, FamilyStatus.SINGLE,
+                false, "alicewonder@gmail.com",
+                "+111111111", LocalDate.of(1997, 1, 1),
+                new BigDecimal("20000"), List.of(HOUSE_2));
+
+        EmailEventDto expectedEmailDto1 = new EmailEventDto(
+                debtor1.getEmail(),
+                EmailType.ALL_DEBTOR_NOTIFICATION,
+                Map.of("firstName", debtor1.getFirstName(),
+                        "lastName", debtor1.getLastName(),
+                        "debt", String.valueOf(debtor1.getTaxesDept()),
+                        "numberOfDebtors", String.valueOf(2)
+                )
+        );
+
+        EmailEventDto expectedEmailDto2 = new EmailEventDto(
+                debtor2.getEmail(),
+                EmailType.ALL_DEBTOR_NOTIFICATION,
+                Map.of("firstName", debtor2.getFirstName(),
+                        "lastName", debtor2.getLastName(),
+                        "debt", String.valueOf(debtor2.getTaxesDept()),
+                        "numberOfDebtors", String.valueOf(2)
+                )
+        );
+
+        ownerRepository.save(debtor1);
+        ownerRepository.save(debtor2);
+
+        debtorNotificationService.notifyAllDebtors();
+
+        String body = (String) rabbitTemplate.receiveAndConvert(EMAIL_TOPIC);
+        String body2 = (String) rabbitTemplate.receiveAndConvert(EMAIL_TOPIC);
+
+        assertTrue(Objects.nonNull(body));
+        assertTrue(Objects.nonNull(body2));
+
+        EmailEventDto receivedEmail1 = mapper.readValue(body, EmailEventDto.class);
+        EmailEventDto receivedEmail2 = mapper.readValue(body2, EmailEventDto.class);
+
+        assertEquals(expectedEmailDto1, receivedEmail1);
+        assertEquals(expectedEmailDto2, receivedEmail2);
+    }
+
+    @Test
+    void should_send_notification_if_there_is_debtor_and_owner_without_debts() throws JsonProcessingException {
+        Owner debtor = new Owner(1, "Frank", "John",
+                30, FamilyStatus.SINGLE,
+                false, "frankjohn@gmail.com",
+                "+456987123",
+                LocalDate.of(1994, 5, 9),
+                new BigDecimal("10000"), List.of(HOUSE_1));
+
+        Owner owner = new Owner(2, "Alice", "Wonder",
+                28, FamilyStatus.SINGLE,
+                false, "alicewonder@gmail.com",
+                "+111111111", LocalDate.of(1997, 1, 1),
+                new BigDecimal("0"), List.of(HOUSE_2));
+
+        EmailEventDto expectedEvent = new EmailEventDto(
+                debtor.getEmail(),
+                EmailType.ALL_DEBTOR_NOTIFICATION,
+                Map.of("firstName", debtor.getFirstName(),
+                        "lastName", debtor.getLastName(),
+                        "debt", String.valueOf(debtor.getTaxesDept()),
+                        "numberOfDebtors", String.valueOf(1)
+                )
+        );
+
+        ownerRepository.save(debtor);
+        ownerRepository.save(owner);
+
+        debtorNotificationService.notifyAllDebtors();
+
+        String body = (String) rabbitTemplate.receiveAndConvert(EMAIL_TOPIC);
+        String body2 = (String) rabbitTemplate.receiveAndConvert(EMAIL_TOPIC);
+
+        assertTrue(Objects.nonNull(body));
+        assertNull(body2);
+
+        EmailEventDto receivedEvent = mapper.readValue(body, EmailEventDto.class);
+
+        assertEquals(expectedEvent, receivedEvent);
     }
 
     @Test
@@ -104,7 +218,10 @@ public class DebtorNotificationServiceIntegrationTests {
         EmailEventDto expectedEvent = new EmailEventDto(
                 "terebylov@ssemi.cz",
                 EmailType.ALL_DEBTOR_NOTIFICATION,
-                Map.of("firstName", "John", "lastName", "Doe", "debt", "10000")
+                Map.of("firstName", "John",
+                        "lastName", "Doe",
+                        "debt", "10000",
+                        "numberOfDebtors", String.valueOf(1))
         );
 
         emailSender.send(expectedEvent);
@@ -116,19 +233,28 @@ public class DebtorNotificationServiceIntegrationTests {
         EmailEventDto receivedEvent = mapper.readValue(body, EmailEventDto.class);
 
         assertTrue(Objects.nonNull(receivedEvent));
-        assertEquals(expectedEvent.email(), receivedEvent.email());
-        assertEquals(expectedEvent.type(), receivedEvent.type());
-        assertEquals(expectedEvent.params(), receivedEvent.params());
+        assertEquals(expectedEvent, receivedEvent);
     }
 
     @Test
-    void should_send_notification_to_certain_debtor_by_id() {
+    void should_send_notification_to_certain_debtor_by_id() throws JsonProcessingException {
         Owner debtor = new Owner(1, "Frank", "John",
                 30, FamilyStatus.SINGLE,
                 false, "frankjohn@gmail.com",
                 "+456987123",
                 LocalDate.of(1994, 5, 9),
                 new BigDecimal("10000"), List.of(HOUSE_1));
+
+
+        EmailEventDto expectedEvent = new EmailEventDto(
+                debtor.getEmail(),
+                EmailType.SINGLE_DEBTOR_NOTIFICATION,
+                Map.of("firstName", debtor.getFirstName(),
+                        "lastName", debtor.getLastName(),
+                        "debt", String.valueOf(debtor.getTaxesDept()),
+                        "hasChildren", "No",
+                        "familyStatus", "Single")
+        );
 
         ownerRepository.save(debtor);
 
@@ -137,6 +263,10 @@ public class DebtorNotificationServiceIntegrationTests {
         String body = (String) rabbitTemplate.receiveAndConvert(EMAIL_TOPIC);
 
         assertTrue(Objects.nonNull(body));
+
+        EmailEventDto receivedEvent = mapper.readValue(body, EmailEventDto.class);
+
+        assertEquals(expectedEvent, receivedEvent);
     }
 
     @Test

@@ -10,6 +10,4 @@ public interface TaxRateRepository {
     List<TaxRate> getAll();
 
     boolean changeTax(PropertyType propertyType, BigDecimal rate);
-
-    void init();
 }

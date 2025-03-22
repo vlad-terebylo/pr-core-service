@@ -22,6 +22,4 @@ public class TaxRateService {
     public boolean changeTax(PropertyType propertyType, BigDecimal rate) {
         return this.taxRateRepository.changeTax(propertyType, rate);
     }
-
-
 }

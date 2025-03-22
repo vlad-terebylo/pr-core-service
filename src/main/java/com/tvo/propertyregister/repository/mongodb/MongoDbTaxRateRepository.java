@@ -18,8 +18,4 @@ public class MongoDbTaxRateRepository implements TaxRateRepository {
         return true;
     }
 
-    @Override
-    public void init() {
-
-    }
 }

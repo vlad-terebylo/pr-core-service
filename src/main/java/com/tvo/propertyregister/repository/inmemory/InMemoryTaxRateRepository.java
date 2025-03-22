@@ -31,12 +31,4 @@ public class InMemoryTaxRateRepository implements TaxRateRepository {
 
         throw new PropertyTypeDoesNotExistException("The property type " + propertyType.name() + " does not exists");
     }
-
-    @Override
-    public void init() {
-        taxRates = List.of(
-                new TaxRate(1, PropertyType.FLAT, new BigDecimal("6")),
-                new TaxRate(2, PropertyType.HOUSE, new BigDecimal("8")),
-                new TaxRate(3, PropertyType.OFFICE, new BigDecimal("13")));
-    }
 }
