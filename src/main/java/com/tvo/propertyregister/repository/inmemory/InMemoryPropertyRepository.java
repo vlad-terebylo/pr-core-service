@@ -11,6 +11,7 @@ import com.tvo.propertyregister.repository.PropertyRepository;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 public class InMemoryPropertyRepository implements PropertyRepository {
@@ -37,19 +38,19 @@ public class InMemoryPropertyRepository implements PropertyRepository {
             false, "johnsmith@gmail.com",
             "+456987123",
             LocalDate.of(1994, 8, 9),
-            new BigDecimal("0"), List.of(propertyFirst));
+            new BigDecimal("0"), new ArrayList<>(List.of(propertyFirst)));
     private final Owner ownerSecond = new Owner(2, "Linda", "Johnson",
             31, FamilyStatus.MARRIED,
             true, "lindajohnson@gmail.com",
             "+789456147",
             LocalDate.of(1993, 7, 17),
-            new BigDecimal("0"), List.of(propertySecond));
+            new BigDecimal("0"), new ArrayList<>(List.of(propertySecond)));
     private final Owner ownerThird = new Owner(3, "Dan", "Kravets",
             30, FamilyStatus.SINGLE,
             false, "DDD_JDK@gmail.com",
             "+784578457",
             LocalDate.of(1994, 1, 31),
-            new BigDecimal("0"), List.of(propertyThird));
+            new BigDecimal("0"), new ArrayList<>(List.of(propertyThird)));
 
     private final List<Owner> owners = List.of(ownerFirst, ownerSecond, ownerThird);
 
@@ -110,6 +111,9 @@ public class InMemoryPropertyRepository implements PropertyRepository {
 
     @Override
     public void clear() {
-
+        counter = 3;
+        ownerFirst.setProperties(new ArrayList<>(List.of(propertyFirst)));
+        ownerSecond.setProperties(new ArrayList<>(List.of(propertySecond)));
+        ownerThird.setProperties(new ArrayList<>(List.of(propertyThird)));
     }
 }
