@@ -1,5 +1,7 @@
 package com.tvo.propertyregister.unit;
 
+import com.tvo.propertyregister.exception.NoSuchOwnerException;
+import com.tvo.propertyregister.exception.PropertyNotFoundException;
 import com.tvo.propertyregister.model.owner.FamilyStatus;
 import com.tvo.propertyregister.model.owner.Owner;
 import com.tvo.propertyregister.model.property.Property;
@@ -18,6 +20,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -82,11 +85,20 @@ public class PropertyServiceTest {
 
     @Test
     public void should_return_all_properties_by_owner_id() {
-        when(propertyRepository.getAllProperties(OWNER.getId())).thenReturn(OWNER.getProperties());
+        when(propertyService.getAll(OWNER.getId())).thenReturn(OWNER.getProperties());
 
         List<Property> factualProperties = propertyService.getAll(OWNER.getId());
 
         assertEquals(OWNER.getProperties(), factualProperties);
+    }
+
+    @Test
+    public void should_not_return_properties_if_property_list_is_empty() {
+        when(propertyService.getAll(OWNER.getId())).thenReturn(List.of());
+
+        List<Property> properties = propertyService.getAll(OWNER.getId());
+
+        assertEquals(List.of(), properties);
     }
 
     @Test
@@ -97,6 +109,15 @@ public class PropertyServiceTest {
     }
 
     @Test
+    public void should_not_add_new_property_if_owner_does_not_exists() {
+        int invalidId = -1;
+
+        when(propertyService.addNewProperty(invalidId, SECOND_PROPERTY)).thenThrow(NoSuchOwnerException.class);
+
+        assertThrows(NoSuchOwnerException.class, () -> propertyService.addNewProperty(invalidId, SECOND_PROPERTY));
+    }
+
+    @Test
     public void should_update_property_info() {
         propertyService.updatePropertyInfo(OWNER.getId(), FIRST_PROPERTY.getId(), THIRD_PROPERTY);
 
@@ -104,9 +125,36 @@ public class PropertyServiceTest {
     }
 
     @Test
+    public void should_not_update_property_info_if_owner_does_not_exists() {
+        int invalidOwnerId = -1;
+
+        when(propertyService.updatePropertyInfo(invalidOwnerId, FIRST_PROPERTY.getId(), THIRD_PROPERTY)).thenThrow(NoSuchOwnerException.class);
+
+        assertThrows(NoSuchOwnerException.class, () -> propertyService.updatePropertyInfo(invalidOwnerId, FIRST_PROPERTY.getId(), THIRD_PROPERTY));
+    }
+
+    @Test
+    public void should_not_update_property_info_if_property_does_not_exists() {
+        int invalidPropertyId = -1;
+
+        when(propertyService.updatePropertyInfo(OWNER.getId(), invalidPropertyId, THIRD_PROPERTY)).thenThrow(PropertyNotFoundException.class);
+
+        assertThrows(PropertyNotFoundException.class, () -> propertyService.updatePropertyInfo(OWNER.getId(), invalidPropertyId, THIRD_PROPERTY));
+    }
+
+    @Test
     public void should_delete_property() {
         propertyService.remove(OWNER.getId(), FIRST_PROPERTY.getId());
 
         verify(propertyRepository, times(1)).remove(OWNER.getId(), FIRST_PROPERTY.getId());
+    }
+
+    @Test
+    public void should_not_delete_property_if_owner_does_not_exists() {
+        int invalidOwnerId = -1;
+
+        when(propertyService.remove(invalidOwnerId, FIRST_PROPERTY.getId())).thenThrow(NoSuchOwnerException.class);
+
+        assertThrows(NoSuchOwnerException.class, () -> propertyService.remove(invalidOwnerId, FIRST_PROPERTY.getId()));
     }
 }

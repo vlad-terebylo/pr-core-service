@@ -2,6 +2,7 @@ package com.tvo.propertyregister.service;
 
 import com.tvo.propertyregister.exception.DontHaveTaxDebtsException;
 import com.tvo.propertyregister.exception.NoDebtorsInDebtorListException;
+import com.tvo.propertyregister.exception.NoSuchOwnerException;
 import com.tvo.propertyregister.model.dto.EmailEventDto;
 import com.tvo.propertyregister.model.dto.EmailType;
 import com.tvo.propertyregister.model.owner.Owner;
@@ -12,6 +13,7 @@ import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 
 @Service
@@ -49,6 +51,9 @@ public class DebtorNotificationService {
 
     public boolean notifyDebtorById(int id) {
         Owner debtor = this.ownerService.getOwnerById(id);
+        if(Objects.isNull(debtor)){
+            throw new NoSuchOwnerException("The owner with id " + id + " does not exists");
+        }
         if (debtor.getTaxesDept().compareTo(new BigDecimal("0")) <= 0) {
             throw new DontHaveTaxDebtsException("Does not exists or his tax debt is lower or equals zero!");
         }

@@ -1,5 +1,7 @@
 package com.tvo.propertyregister.unit;
 
+import com.tvo.propertyregister.exception.NoSuchOwnerException;
+import com.tvo.propertyregister.exception.UpdateOwnerFailedException;
 import com.tvo.propertyregister.model.TaxRate;
 import com.tvo.propertyregister.model.owner.FamilyStatus;
 import com.tvo.propertyregister.model.owner.Owner;
@@ -19,7 +21,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -83,7 +85,7 @@ public class OwnerServiceTest {
 
     @Test
     public void should_return_all_owners() {
-        when(ownerRepository.getAllOwners()).thenReturn(List.of(OWNER));
+        when(ownerService.getAllOwners()).thenReturn(List.of(OWNER));
 
         List<Owner> result = ownerService.getAllOwners();
 
@@ -91,8 +93,17 @@ public class OwnerServiceTest {
     }
 
     @Test
+    public void should_return_empty_list_if_no_owners() {
+        when(ownerService.getAllOwners()).thenReturn(List.of());
+
+        List<Owner> result = ownerService.getAllOwners();
+
+        assertEquals(List.of(), result);
+    }
+
+    @Test
     public void should_return_owner_by_id() {
-        when(ownerRepository.findById(OWNER.getId())).thenReturn(OWNER);
+        when(ownerService.getOwnerById(OWNER.getId())).thenReturn(OWNER);
 
         Owner result = ownerService.getOwnerById(OWNER.getId());
 
@@ -100,13 +111,52 @@ public class OwnerServiceTest {
     }
 
     @Test
+    public void should_not_return_owner_by_id_if_id_is_wrong() {
+        int wrongId = -1;
+        when(ownerService.getOwnerById(wrongId)).thenThrow(NoSuchOwnerException.class);
+
+        assertThrows(NoSuchOwnerException.class, () -> ownerService.getOwnerById(wrongId));
+    }
+
+    @Test
     public void should_return_all_debtors() {
-        when(ownerRepository.findDebtors()).thenReturn(List.of(DEBTOR));
+        when(ownerService.findDebtors()).thenReturn(List.of(DEBTOR));
 
         List<Owner> result = ownerService.findDebtors();
 
         assertEquals(List.of(DEBTOR), result);
+    }
 
+    @Test
+    public void should_return_empty_list_if_there_are_no_debtors() {
+        when(ownerService.findDebtors()).thenReturn(List.of());
+
+        List<Owner> result = ownerService.findDebtors();
+
+        assertEquals(List.of(), result);
+    }
+
+    @Test
+    void should_recalculate_debt_for_debtors() {
+        List<Owner> allDebtors = List.of(DEBTOR);
+        Owner expectedDebtor = allDebtors.get(0).withTaxesDept(allDebtors.get(0).getTaxesDept().multiply(new BigDecimal("1.05")));
+
+        when(ownerService.findDebtors()).thenReturn(allDebtors);
+
+        ownerService.recountDebtForDebtors();
+
+        verify(ownerRepository, times(1)).findDebtors();
+        verify(ownerRepository, times(1)).update(DEBTOR.getId(), expectedDebtor);
+    }
+
+    @Test
+    void should_not_recalculate_debt_is_the_owner_does_not_have_debts() {
+        when(ownerService.findDebtors()).thenReturn(List.of());
+
+        ownerService.recountDebtForDebtors();
+
+        verify(ownerRepository, times(1)).findDebtors();
+        verify(ownerRepository, never()).update(anyInt(), any());
     }
 
     @Test
@@ -124,6 +174,15 @@ public class OwnerServiceTest {
     }
 
     @Test
+    public void should_not_update_non_existing_owner() {
+        int wrongId = -1;
+        when(ownerService.updateInfo(wrongId, OWNER)).thenThrow(UpdateOwnerFailedException.class);
+
+        assertThrows(UpdateOwnerFailedException.class, () -> ownerService.updateInfo(wrongId, OWNER));
+    }
+
+
+    @Test
     public void should_delete_owner() {
         ownerService.removeOwner(OWNER.getId());
 
@@ -131,7 +190,17 @@ public class OwnerServiceTest {
     }
 
     @Test
-    public void should_count_base_tax_for_owner_having_multiple_properties_with_no_leeway() {
+    void should_not_delete_owner_if_owner_does_not_exists() {
+        int wrongId = -1;
+        when(ownerService.removeOwner(wrongId)).thenReturn(false);
+
+        boolean result = ownerService.removeOwner(wrongId);
+
+        assertFalse(result);
+    }
+
+    @Test
+    public void should_count_base_tax_for_owner_with_no_leeway() {
 
         BigDecimal expectedBaseTax = new BigDecimal("3320");
 
@@ -141,7 +210,7 @@ public class OwnerServiceTest {
                 TAX_RATE_HOUSE,
                 TAX_RATE_OFFICE));
 
-        when(ownerRepository.findById(OWNER.getId())).thenReturn(OWNER);
+        when(ownerService.getOwnerById(OWNER.getId())).thenReturn(OWNER);
 
         BigDecimal baseTaxResult = ownerService.countTaxObligation(OWNER.getId());
 
@@ -150,7 +219,7 @@ public class OwnerServiceTest {
     }
 
     @Test
-    public void should_count_base_tax_for_owner_having_single_property_with_multiple_leeway() {
+    public void should_count_base_tax_for_owner_with_multiple_leeway() {
         // given
         BigDecimal expectedBaseTax = new BigDecimal("336.0");
 
@@ -160,7 +229,7 @@ public class OwnerServiceTest {
                 TAX_RATE_HOUSE,
                 TAX_RATE_OFFICE));
 
-        when(ownerRepository.findById(DEBTOR.getId())).thenReturn(DEBTOR);
+        when(ownerService.getOwnerById(DEBTOR.getId())).thenReturn(DEBTOR);
 
         BigDecimal baseTaxResult = ownerService.countTaxObligation(DEBTOR.getId());
 
@@ -169,7 +238,7 @@ public class OwnerServiceTest {
     }
 
     @Test
-    public void should_count_base_tax_for_owner_having_single_property() {
+    public void should_count_base_tax_for_single_owner_and_with_children() {
         BigDecimal expectedTaxObligation = new BigDecimal("1120.0");
 
         when(taxRateService.getAll()).thenReturn(List.of(
@@ -178,7 +247,7 @@ public class OwnerServiceTest {
                 TAX_RATE_OFFICE
         ));
 
-        when(ownerRepository.findById(OWNER_2.getId())).thenReturn(OWNER_2);
+        when(ownerService.getOwnerById(OWNER_2.getId())).thenReturn(OWNER_2);
 
         BigDecimal taxObligationResult = ownerService.countTaxObligation(OWNER_2.getId());
 
@@ -186,15 +255,26 @@ public class OwnerServiceTest {
     }
 
     @Test
-    void should_recalculate_debt_for_debtors() {
-        List<Owner> allDebtors = List.of(DEBTOR);
-        Owner expectedDebtor = allDebtors.get(0).withTaxesDept(allDebtors.get(0).getTaxesDept().multiply(new BigDecimal("1.05")));
+    public void should_count_tax_obligations_for_married_owner_without_children() {
+        BigDecimal expectedTaxObligations = new BigDecimal("378.0");
 
-        when(ownerRepository.findDebtors()).thenReturn(allDebtors);
+        Owner owner = new Owner(4, "Linda", "Johnson",
+                31, FamilyStatus.MARRIED,
+                false, "lindajohnson@gmail.com",
+                "+789456147",
+                LocalDate.of(1993, 7, 17),
+                new BigDecimal("10000"), List.of(PROPERTY_FLAT));
 
-        ownerService.recountDebtForDebtors();
+        when(taxRateService.getAll()).thenReturn(List.of(
+                TAX_RATE_FLAT,
+                TAX_RATE_HOUSE,
+                TAX_RATE_OFFICE
+        ));
 
-        verify(ownerRepository, times(1)).findDebtors();
-        verify(ownerRepository, times(1)).update(DEBTOR.getId(), expectedDebtor);
+        when(ownerService.getOwnerById(owner.getId())).thenReturn(owner);
+
+        BigDecimal taxObligationResult = ownerService.countTaxObligation(owner.getId());
+
+        assertEquals(expectedTaxObligations, taxObligationResult);
     }
 }

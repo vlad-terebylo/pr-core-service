@@ -2,13 +2,14 @@ package com.tvo.propertyregister.unit;
 
 import com.tvo.propertyregister.exception.DontHaveTaxDebtsException;
 import com.tvo.propertyregister.exception.NoDebtorsInDebtorListException;
+import com.tvo.propertyregister.exception.NoSuchOwnerException;
 import com.tvo.propertyregister.model.dto.EmailEventDto;
 import com.tvo.propertyregister.model.dto.EmailType;
 import com.tvo.propertyregister.model.owner.FamilyStatus;
 import com.tvo.propertyregister.model.owner.Owner;
-import com.tvo.propertyregister.repository.OwnerRepository;
 import com.tvo.propertyregister.service.DebtorNotificationService;
 import com.tvo.propertyregister.service.EmailSender;
+import com.tvo.propertyregister.service.OwnerService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -27,7 +28,7 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 public class DebtorNotificationServiceTest {
     @Mock
-    private OwnerRepository ownerRepository;
+    private OwnerService ownerService;
 
     @Mock
     private EmailSender emailSender;
@@ -57,7 +58,7 @@ public class DebtorNotificationServiceTest {
                 EmailType.ALL_DEBTOR_NOTIFICATION,
                 params);
 
-        when(ownerRepository.findDebtors()).thenReturn(List.of(debtor));
+        when(ownerService.findDebtors()).thenReturn(List.of(debtor));
 
         boolean result = debtorNotificationService.notifyAllDebtors();
 
@@ -66,9 +67,31 @@ public class DebtorNotificationServiceTest {
     }
 
     @Test
+    void should_notify_debtors_when_there_are_two_or_more_debtors() {
+        Owner debtor2 = new Owner(
+                2,
+                "terebylov@ssemi.cz",
+                "Frank",
+                "John",
+                new BigDecimal("10000"),
+                false,
+                FamilyStatus.SINGLE
+        );
+
+        List<Owner> debtors = List.of(debtor, debtor2);
+
+        when(ownerService.findDebtors()).thenReturn(debtors);
+
+        boolean result = debtorNotificationService.notifyAllDebtors();
+
+        verify(emailSender, times(2)).send(any(EmailEventDto.class));
+        assertTrue(result);
+    }
+
+    @Test
     void should_notify_all_debtors_when_no_debtors() {
 
-        when(ownerRepository.findDebtors()).thenReturn(Collections.emptyList());
+        when(ownerService.findDebtors()).thenReturn(Collections.emptyList());
 
         assertThrows(NoDebtorsInDebtorListException.class, () -> debtorNotificationService.notifyAllDebtors());
 
@@ -91,8 +114,7 @@ public class DebtorNotificationServiceTest {
                 debtor.getEmail(),
                 EmailType.SINGLE_DEBTOR_NOTIFICATION,
                 params);
-
-        when(ownerRepository.findById(1)).thenReturn(debtor);
+        when(ownerService.getOwnerById(1)).thenReturn(debtor);
 
         boolean result = debtorNotificationService.notifyDebtorById(1);
 
@@ -103,9 +125,20 @@ public class DebtorNotificationServiceTest {
     @Test
     void should_not_notify_debtor_by_id_when_owner_has_no_debt() {
         debtor.setTaxesDept(new BigDecimal("0"));
-        when(ownerRepository.findById(1)).thenReturn(debtor);
+        when(ownerService.getOwnerById(1)).thenReturn(debtor);
 
         assertThrows(DontHaveTaxDebtsException.class, () -> debtorNotificationService.notifyDebtorById(1));
+
+        verify(emailSender, never()).send(any());
+    }
+
+    @Test
+    void should_not_notify_debtor_by_id_if_id_is_wrong() {
+        int invalidId = -1;
+
+        when(ownerService.getOwnerById(invalidId)).thenThrow(new NoSuchOwnerException("The owner with id " + invalidId + " does not exists"));
+
+        assertThrows(NoSuchOwnerException.class, () -> debtorNotificationService.notifyDebtorById(invalidId));
 
         verify(emailSender, never()).send(any());
     }
