@@ -85,7 +85,7 @@ public class OwnerServiceTest {
 
     @Test
     public void should_return_all_owners() {
-        when(ownerService.getAllOwners()).thenReturn(List.of(OWNER));
+        when(ownerRepository.findAll()).thenReturn(List.of(OWNER));
 
         List<Owner> result = ownerService.getAllOwners();
 
@@ -94,7 +94,7 @@ public class OwnerServiceTest {
 
     @Test
     public void should_return_empty_list_if_no_owners() {
-        when(ownerService.getAllOwners()).thenReturn(List.of());
+        when(ownerRepository.findAll()).thenReturn(List.of());
 
         List<Owner> result = ownerService.getAllOwners();
 
@@ -103,7 +103,7 @@ public class OwnerServiceTest {
 
     @Test
     public void should_return_owner_by_id() {
-        when(ownerService.getOwnerById(OWNER.getId())).thenReturn(OWNER);
+        when(ownerRepository.findById(OWNER.getId())).thenReturn(OWNER);
 
         Owner result = ownerService.getOwnerById(OWNER.getId());
 
@@ -113,14 +113,14 @@ public class OwnerServiceTest {
     @Test
     public void should_not_return_owner_by_id_if_id_is_wrong() {
         int wrongId = -1;
-        when(ownerService.getOwnerById(wrongId)).thenThrow(NoSuchOwnerException.class);
+        when(ownerRepository.findById(wrongId)).thenThrow(NoSuchOwnerException.class);
 
         assertThrows(NoSuchOwnerException.class, () -> ownerService.getOwnerById(wrongId));
     }
 
     @Test
     public void should_return_all_debtors() {
-        when(ownerService.findDebtors()).thenReturn(List.of(DEBTOR));
+        when(ownerRepository.findDebtors()).thenReturn(List.of(DEBTOR));
 
         List<Owner> result = ownerService.findDebtors();
 
@@ -129,7 +129,7 @@ public class OwnerServiceTest {
 
     @Test
     public void should_return_empty_list_if_there_are_no_debtors() {
-        when(ownerService.findDebtors()).thenReturn(List.of());
+        when(ownerRepository.findDebtors()).thenReturn(List.of());
 
         List<Owner> result = ownerService.findDebtors();
 
@@ -141,7 +141,7 @@ public class OwnerServiceTest {
         List<Owner> allDebtors = List.of(DEBTOR);
         Owner expectedDebtor = allDebtors.get(0).withTaxesDept(allDebtors.get(0).getTaxesDept().multiply(new BigDecimal("1.05")));
 
-        when(ownerService.findDebtors()).thenReturn(allDebtors);
+        when(ownerRepository.findDebtors()).thenReturn(allDebtors);
 
         ownerService.recountDebtForDebtors();
 
@@ -151,7 +151,7 @@ public class OwnerServiceTest {
 
     @Test
     void should_not_recalculate_debt_is_the_owner_does_not_have_debts() {
-        when(ownerService.findDebtors()).thenReturn(List.of());
+        when(ownerRepository.findDebtors()).thenReturn(List.of());
 
         ownerService.recountDebtForDebtors();
 
@@ -176,7 +176,7 @@ public class OwnerServiceTest {
     @Test
     public void should_not_update_non_existing_owner() {
         int wrongId = -1;
-        when(ownerService.updateInfo(wrongId, OWNER)).thenThrow(UpdateOwnerFailedException.class);
+        when(ownerRepository.update(wrongId, OWNER)).thenThrow(UpdateOwnerFailedException.class);
 
         assertThrows(UpdateOwnerFailedException.class, () -> ownerService.updateInfo(wrongId, OWNER));
     }
@@ -192,7 +192,7 @@ public class OwnerServiceTest {
     @Test
     void should_not_delete_owner_if_owner_does_not_exists() {
         int wrongId = -1;
-        when(ownerService.removeOwner(wrongId)).thenReturn(false);
+        when(ownerRepository.remove(wrongId)).thenReturn(false);
 
         boolean result = ownerService.removeOwner(wrongId);
 
@@ -271,7 +271,7 @@ public class OwnerServiceTest {
                 TAX_RATE_OFFICE
         ));
 
-        when(ownerService.getOwnerById(owner.getId())).thenReturn(owner);
+        when(ownerRepository.findById(owner.getId())).thenReturn(owner);
 
         BigDecimal taxObligationResult = ownerService.countTaxObligation(owner.getId());
 

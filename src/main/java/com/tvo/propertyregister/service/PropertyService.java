@@ -16,7 +16,7 @@ public class PropertyService {
     private final PropertyRepository propertyRepository;
 
     public List<Property> getAll(int ownerId) {
-        return this.propertyRepository.getAllProperties(ownerId);
+        return this.propertyRepository.findAll(ownerId);
     }
 
     public boolean addNewProperty(int ownerId, Property property) {

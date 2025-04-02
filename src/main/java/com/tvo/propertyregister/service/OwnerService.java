@@ -20,7 +20,7 @@ public class OwnerService {
     private final TaxRateService taxRateService;
 
     public List<Owner> getAllOwners() {
-        return this.ownerRepository.getAllOwners();
+        return this.ownerRepository.findAll();
     }
 
     public Owner getOwnerById(int id) {

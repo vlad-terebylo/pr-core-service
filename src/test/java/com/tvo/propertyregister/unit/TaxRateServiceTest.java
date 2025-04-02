@@ -46,7 +46,7 @@ public class TaxRateServiceTest {
     public void should_return_all_tax_rates() {
         List<TaxRate> expectedRates = List.of(FLAT_RATE, HOUSE_RATE, OFFICE_RATE);
 
-        when(taxRateRepository.getAll()).thenReturn(expectedRates);
+        when(taxRateRepository.findAll()).thenReturn(expectedRates);
 
         List<TaxRate> result = taxRateService.getAll();
 
@@ -71,6 +71,17 @@ public class TaxRateServiceTest {
         when(taxRateRepository.changeTax(PropertyType.HOUSE, newHouseRate)).thenReturn(true);
 
         boolean result = taxRateService.changeTax(PropertyType.HOUSE, newHouseRate);
+
+        assertTrue(result);
+    }
+
+    @Test
+    public void should_change_tax_rate_for_offices() {
+        BigDecimal newOfficeRate = new BigDecimal("15");
+
+        when(taxRateRepository.changeTax(PropertyType.OFFICE, newOfficeRate)).thenReturn(true);
+
+        boolean result = taxRateService.changeTax(PropertyType.OFFICE, newOfficeRate);
 
         assertTrue(result);
     }

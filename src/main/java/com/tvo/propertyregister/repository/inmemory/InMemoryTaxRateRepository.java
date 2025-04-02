@@ -16,7 +16,7 @@ public class InMemoryTaxRateRepository implements TaxRateRepository {
             new TaxRate(3, PropertyType.OFFICE, new BigDecimal("13")));
 
     @Override
-    public List<TaxRate> getAll() {
+    public List<TaxRate> findAll() {
         return this.taxRates;
     }
 

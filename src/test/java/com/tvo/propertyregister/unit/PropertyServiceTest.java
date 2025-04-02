@@ -85,20 +85,31 @@ public class PropertyServiceTest {
 
     @Test
     public void should_return_all_properties_by_owner_id() {
-        when(propertyService.getAll(OWNER.getId())).thenReturn(OWNER.getProperties());
+        when(propertyRepository.findAll(OWNER.getId())).thenReturn(OWNER.getProperties());
 
         List<Property> factualProperties = propertyService.getAll(OWNER.getId());
 
         assertEquals(OWNER.getProperties(), factualProperties);
+
+        verify(propertyRepository, times(1)).findAll(OWNER.getId());
     }
 
     @Test
     public void should_not_return_properties_if_property_list_is_empty() {
-        when(propertyService.getAll(OWNER.getId())).thenReturn(List.of());
+        when(propertyRepository.findAll(OWNER.getId())).thenReturn(List.of());
 
         List<Property> properties = propertyService.getAll(OWNER.getId());
 
         assertEquals(List.of(), properties);
+
+        verify(propertyRepository, times(1)).findAll(OWNER.getId());
+    }
+
+    @Test
+    public void should_not_return_properties_if_owner_does_not_exists() {
+        when(propertyRepository.findAll(OWNER.getId())).thenThrow(NoSuchOwnerException.class);
+
+        assertThrows(NoSuchOwnerException.class, () -> propertyService.getAll(OWNER.getId()));
     }
 
     @Test
@@ -112,7 +123,7 @@ public class PropertyServiceTest {
     public void should_not_add_new_property_if_owner_does_not_exists() {
         int invalidId = -1;
 
-        when(propertyService.addNewProperty(invalidId, SECOND_PROPERTY)).thenThrow(NoSuchOwnerException.class);
+        when(propertyRepository.save(invalidId, SECOND_PROPERTY)).thenThrow(NoSuchOwnerException.class);
 
         assertThrows(NoSuchOwnerException.class, () -> propertyService.addNewProperty(invalidId, SECOND_PROPERTY));
     }
@@ -128,7 +139,7 @@ public class PropertyServiceTest {
     public void should_not_update_property_info_if_owner_does_not_exists() {
         int invalidOwnerId = -1;
 
-        when(propertyService.updatePropertyInfo(invalidOwnerId, FIRST_PROPERTY.getId(), THIRD_PROPERTY)).thenThrow(NoSuchOwnerException.class);
+        when(propertyRepository.update(invalidOwnerId, FIRST_PROPERTY.getId(), THIRD_PROPERTY)).thenThrow(NoSuchOwnerException.class);
 
         assertThrows(NoSuchOwnerException.class, () -> propertyService.updatePropertyInfo(invalidOwnerId, FIRST_PROPERTY.getId(), THIRD_PROPERTY));
     }
@@ -137,7 +148,7 @@ public class PropertyServiceTest {
     public void should_not_update_property_info_if_property_does_not_exists() {
         int invalidPropertyId = -1;
 
-        when(propertyService.updatePropertyInfo(OWNER.getId(), invalidPropertyId, THIRD_PROPERTY)).thenThrow(PropertyNotFoundException.class);
+        when(propertyRepository.update(OWNER.getId(), invalidPropertyId, THIRD_PROPERTY)).thenThrow(PropertyNotFoundException.class);
 
         assertThrows(PropertyNotFoundException.class, () -> propertyService.updatePropertyInfo(OWNER.getId(), invalidPropertyId, THIRD_PROPERTY));
     }
@@ -153,7 +164,7 @@ public class PropertyServiceTest {
     public void should_not_delete_property_if_owner_does_not_exists() {
         int invalidOwnerId = -1;
 
-        when(propertyService.remove(invalidOwnerId, FIRST_PROPERTY.getId())).thenThrow(NoSuchOwnerException.class);
+        when(propertyRepository.remove(invalidOwnerId, FIRST_PROPERTY.getId())).thenThrow(NoSuchOwnerException.class);
 
         assertThrows(NoSuchOwnerException.class, () -> propertyService.remove(invalidOwnerId, FIRST_PROPERTY.getId()));
     }

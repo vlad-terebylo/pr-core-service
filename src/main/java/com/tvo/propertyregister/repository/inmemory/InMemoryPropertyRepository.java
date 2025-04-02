@@ -57,7 +57,7 @@ public class InMemoryPropertyRepository implements PropertyRepository {
     private static int counter = 3;
 
     @Override
-    public List<Property> getAllProperties(int ownerId) {
+    public List<Property> findAll(int ownerId) {
         for (Owner currentOwner : this.owners) {
             if (currentOwner.getId() == ownerId) {
                 return currentOwner.getProperties();

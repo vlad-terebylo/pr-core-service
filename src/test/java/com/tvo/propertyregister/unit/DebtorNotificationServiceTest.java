@@ -46,7 +46,7 @@ public class DebtorNotificationServiceTest {
             FamilyStatus.SINGLE);
 
     @Test
-    void should_notify_all_debtors() {
+    void should_notify_all_debtors_when_there_is_one_debtor() {
         Map<String, String> params = Map.of(
                 "firstName", debtor.getFirstName(),
                 "lastName", debtor.getLastName(),
@@ -90,8 +90,7 @@ public class DebtorNotificationServiceTest {
 
     @Test
     void should_notify_all_debtors_when_no_debtors() {
-
-        when(ownerService.findDebtors()).thenReturn(Collections.emptyList());
+        when(ownerService.findDebtors()).thenReturn(List.of());
 
         assertThrows(NoDebtorsInDebtorListException.class, () -> debtorNotificationService.notifyAllDebtors());
 

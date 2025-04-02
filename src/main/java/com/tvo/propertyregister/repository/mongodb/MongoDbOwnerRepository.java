@@ -7,7 +7,7 @@ import java.util.List;
 
 public class MongoDbOwnerRepository implements OwnerRepository {
     @Override
-    public List<Owner> getAllOwners() {
+    public List<Owner> findAll() {
         return null;
     }
 

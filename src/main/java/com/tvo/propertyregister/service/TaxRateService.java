@@ -16,7 +16,7 @@ public class TaxRateService {
     private final TaxRateRepository taxRateRepository;
 
     public List<TaxRate> getAll() {
-        return this.taxRateRepository.getAll();
+        return this.taxRateRepository.findAll();
     }
 
     public boolean changeTax(PropertyType propertyType, BigDecimal rate) {

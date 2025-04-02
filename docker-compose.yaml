@@ -5,10 +5,6 @@ services:
     image: mongo:latest
     ports:
       - "27017:27017"
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: pokus
-      MONGO_INITDB_ROOT_DB: property_register_tvo
   rabbitmq:
     image: rabbitmq:3-management
     container_name: rabbitmq

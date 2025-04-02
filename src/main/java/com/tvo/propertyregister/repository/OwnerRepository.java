@@ -6,7 +6,7 @@ import java.util.List;
 
 public interface OwnerRepository {
 
-    List<Owner> getAllOwners();
+    List<Owner> findAll();
 
     Owner findById(int id);
 

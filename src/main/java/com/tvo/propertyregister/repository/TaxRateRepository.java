@@ -7,7 +7,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 public interface TaxRateRepository {
-    List<TaxRate> getAll();
+    List<TaxRate> findAll();
 
     boolean changeTax(PropertyType propertyType, BigDecimal rate);
 }

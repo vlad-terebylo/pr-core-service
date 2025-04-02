@@ -17,7 +17,7 @@ public class InMemoryOwnerRepository implements OwnerRepository {
     private final List<Owner> allOwners = new ArrayList<>();
 
     @Override
-    public List<Owner> getAllOwners() {
+    public List<Owner> findAll() {
         return this.allOwners;
     }
 

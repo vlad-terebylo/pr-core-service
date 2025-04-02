@@ -7,7 +7,7 @@ import java.util.List;
 
 public class MongoDbPropertyRepository implements PropertyRepository {
     @Override
-    public List<Property> getAllProperties(int owner_id) {
+    public List<Property> findAll(int owner_id) {
         return null;
     }
 
