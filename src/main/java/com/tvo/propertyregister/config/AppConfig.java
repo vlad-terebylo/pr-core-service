@@ -6,6 +6,8 @@ import com.tvo.propertyregister.repository.TaxRateRepository;
 import com.tvo.propertyregister.repository.inmemory.InMemoryOwnerRepository;
 import com.tvo.propertyregister.repository.inmemory.InMemoryPropertyRepository;
 import com.tvo.propertyregister.repository.inmemory.InMemoryTaxRateRepository;
+import com.tvo.propertyregister.repository.mongodb.MongoDbOwnerRepository;
+import com.tvo.propertyregister.repository.mongodb.MongoDbPropertyRepository;
 import com.tvo.propertyregister.repository.mongodb.MongoDbTaxRateRepository;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -15,8 +17,8 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 public class AppConfig {
 
     @Bean
-    public OwnerRepository ownerRealization() {
-        return new InMemoryOwnerRepository();
+    public OwnerRepository ownerRealization(MongoTemplate mongoTemplate) {
+        return new MongoDbOwnerRepository(mongoTemplate);
     }
 
     @Bean
@@ -25,7 +27,7 @@ public class AppConfig {
     }
 
     @Bean
-    public PropertyRepository propertyRealization() {
-        return new InMemoryPropertyRepository();
+    public PropertyRepository propertyRealization(MongoTemplate mongoTemplate) {
+        return new MongoDbPropertyRepository(mongoTemplate);
     }
 }
