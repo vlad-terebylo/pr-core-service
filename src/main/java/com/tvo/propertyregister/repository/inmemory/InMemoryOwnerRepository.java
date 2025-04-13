@@ -37,7 +37,7 @@ public class InMemoryOwnerRepository implements OwnerRepository {
         List<Owner> debtors = new ArrayList<>();
 
         for (Owner owner : this.allOwners) {
-            if (owner.getTaxesDept().compareTo(BigDecimal.ZERO) > 0) {
+            if (owner.getTaxesDebt().compareTo(BigDecimal.ZERO) > 0) {
                 debtors.add(owner);
             }
         }
@@ -58,6 +58,7 @@ public class InMemoryOwnerRepository implements OwnerRepository {
 
     @Override
     public boolean update(int id, Owner owner) {
+
         for (Property property : owner.getProperties()) {
             property.setId(propertyCounter++);
         }
@@ -70,7 +71,7 @@ public class InMemoryOwnerRepository implements OwnerRepository {
                 currentOwner.setHasChildren(owner.isHasChildren());
                 currentOwner.setEmail(owner.getEmail());
                 currentOwner.setPhoneNumber(owner.getPhoneNumber());
-                currentOwner.setTaxesDept(owner.getTaxesDept());
+                currentOwner.setTaxesDebt(owner.getTaxesDebt());
                 currentOwner.setProperties(owner.getProperties());
                 return true;
             }

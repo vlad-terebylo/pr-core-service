@@ -139,7 +139,7 @@ public class OwnerServiceTest {
     @Test
     void should_recalculate_debt_for_debtors() {
         List<Owner> allDebtors = List.of(DEBTOR);
-        Owner expectedDebtor = allDebtors.get(0).withTaxesDept(allDebtors.get(0).getTaxesDept().multiply(new BigDecimal("1.05")));
+        Owner expectedDebtor = allDebtors.get(0).withTaxesDebt(allDebtors.get(0).getTaxesDebt().multiply(new BigDecimal("1.05")));
 
         when(ownerRepository.findDebtors()).thenReturn(allDebtors);
 

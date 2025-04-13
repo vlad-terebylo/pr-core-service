@@ -35,7 +35,7 @@ public class DebtorNotificationService {
         for (Owner debtor : debtors) {
             params.put("firstName", debtor.getFirstName());
             params.put("lastName", debtor.getLastName());
-            params.put("debt", String.valueOf(debtor.getTaxesDept()));
+            params.put("debt", String.valueOf(debtor.getTaxesDebt()));
 
             EmailEventDto emailEvent = new EmailEventDto(
                     debtor.getEmail(),
@@ -54,7 +54,7 @@ public class DebtorNotificationService {
         if(Objects.isNull(debtor)){
             throw new NoSuchOwnerException("The owner with id " + id + " does not exists");
         }
-        if (debtor.getTaxesDept().compareTo(new BigDecimal("0")) <= 0) {
+        if (debtor.getTaxesDebt().compareTo(new BigDecimal("0")) <= 0) {
             throw new DontHaveTaxDebtsException("Does not exists or his tax debt is lower or equals zero!");
         }
 
@@ -66,7 +66,7 @@ public class DebtorNotificationService {
                 EmailType.SINGLE_DEBTOR_NOTIFICATION,
                 Map.of("firstName", debtor.getFirstName(),
                         "lastName", debtor.getLastName(),
-                        "debt", String.valueOf(debtor.getTaxesDept()),
+                        "debt", String.valueOf(debtor.getTaxesDebt()),
                         "hasChildren", hasChildren,
                         "familyStatus", familyStatus)
         );

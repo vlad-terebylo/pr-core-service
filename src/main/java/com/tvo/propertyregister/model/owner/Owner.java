@@ -1,5 +1,7 @@
 package com.tvo.propertyregister.model.owner;
 
+import com.tvo.propertyregister.model.dto.CreateOwnerDto;
+import com.tvo.propertyregister.model.dto.UpdateOwnerDto;
 import com.tvo.propertyregister.model.property.Property;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -24,16 +26,40 @@ public class Owner {
     private String email;
     private String phoneNumber;
     private LocalDate birthday;
-    private BigDecimal taxesDept;
+    private BigDecimal taxesDebt;
     private List<Property> properties;
 
-    public Owner(int id, String email, String firstName, String lastName, BigDecimal taxesDept, boolean hasChildren, FamilyStatus familyStatus) {
+    public Owner(int id, String email, String firstName, String lastName, BigDecimal taxesDebt, boolean hasChildren, FamilyStatus familyStatus) {
         this.id = id;
         this.email = email;
         this.firstName = firstName;
         this.lastName = lastName;
-        this.taxesDept = taxesDept;
+        this.taxesDebt = taxesDebt;
         this.hasChildren = hasChildren;
         this.familyStatus = familyStatus;
+    }
+
+    public Owner(CreateOwnerDto ownerDto) {
+        this.firstName = ownerDto.firstName();
+        this.lastName = ownerDto.lastName();
+        this.age = ownerDto.age();
+        this.familyStatus = ownerDto.familyStatus();
+        this.hasChildren = ownerDto.hasChildren();
+        this.email = ownerDto.email();
+        this.phoneNumber = ownerDto.phoneNumber();
+        this.birthday = ownerDto.birthday();
+        this.taxesDebt = ownerDto.taxesDebt();
+    }
+
+    public Owner(UpdateOwnerDto ownerDto) {
+        this.firstName = ownerDto.firstName();
+        this.lastName = ownerDto.lastName();
+        this.age = ownerDto.age();
+        this.familyStatus = ownerDto.familyStatus();
+        this.hasChildren = ownerDto.hasChildren();
+        this.email = ownerDto.email();
+        this.phoneNumber = ownerDto.phoneNumber();
+        this.birthday = ownerDto.birthday();
+        this.taxesDebt = ownerDto.taxesDebt();
     }
 }

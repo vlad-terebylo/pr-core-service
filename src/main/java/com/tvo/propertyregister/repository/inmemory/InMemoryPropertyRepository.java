@@ -68,52 +68,18 @@ public class InMemoryPropertyRepository implements PropertyRepository {
     }
 
     @Override
-    public boolean save(int ownerId, Property property) {
-        property.setId(counter++);
-
-        for (Owner currentOwner : this.owners) {
-            if (currentOwner.getId() == ownerId) {
-                return currentOwner.getProperties().add(property);
-            }
-        }
-        throw new NoSuchOwnerException("Owner with id: %s does not exists!".formatted(ownerId));
-    }
-
-    @Override
-    public boolean update(int ownerId, int propertyId, Property property) {
-        Owner owner = this.owners.stream()
-                .filter(o -> o.getId() == ownerId)
-                .findFirst()
-                .orElseThrow(() -> new NoSuchOwnerException("Owner with id: %s not found".formatted(ownerId)));
-
-        Property currentProperty = owner.getProperties().stream()
-                .filter(p -> p.getId() == propertyId)
-                .findFirst()
-                .orElseThrow(() -> new PropertyNotFoundException("Property with id: %s not found for owner with id: %s".formatted(propertyId, owner)));
-
-        currentProperty.setNumberOfRooms(property.getNumberOfRooms());
-        currentProperty.setCost(property.getCost());
-        currentProperty.setDateOfBecomingOwner(property.getDateOfBecomingOwner());
-
-        return true;
+    public boolean save(int ownerId, List<Property> properties) {
+        return false;
     }
 
 
     @Override
-    public boolean remove(int ownerId, int propertyId) {
-        for (Owner currentOwner : this.owners) {
-            if (currentOwner.getId() == ownerId) {
-                return currentOwner.getProperties().removeIf(currentProperty -> currentProperty.getId() == propertyId);
-            }
-        }
-        throw new NoSuchOwnerException("Owner with id: %s does not exists!".formatted(ownerId));
+    public boolean update(Owner owner) {
+        return false;
     }
 
     @Override
-    public void clear() {
-        counter = 3;
-        ownerFirst.setProperties(new ArrayList<>(List.of(propertyFirst)));
-        ownerSecond.setProperties(new ArrayList<>(List.of(propertySecond)));
-        ownerThird.setProperties(new ArrayList<>(List.of(propertyThird)));
+    public boolean remove(int ownerId, List<Property> updatedProperties) {
+        return false;
     }
 }

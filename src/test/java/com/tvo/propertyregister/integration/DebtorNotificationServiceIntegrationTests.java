@@ -96,7 +96,7 @@ public class DebtorNotificationServiceIntegrationTests {
                 EmailType.ALL_DEBTOR_NOTIFICATION,
                 Map.of("firstName", debtor.getFirstName(),
                         "lastName", debtor.getLastName(),
-                        "debt", String.valueOf(debtor.getTaxesDept()),
+                        "debt", String.valueOf(debtor.getTaxesDebt()),
                         "numberOfDebtors", String.valueOf(1)
                 )
         );
@@ -134,7 +134,7 @@ public class DebtorNotificationServiceIntegrationTests {
                 EmailType.ALL_DEBTOR_NOTIFICATION,
                 Map.of("firstName", debtor1.getFirstName(),
                         "lastName", debtor1.getLastName(),
-                        "debt", String.valueOf(debtor1.getTaxesDept()),
+                        "debt", String.valueOf(debtor1.getTaxesDebt()),
                         "numberOfDebtors", String.valueOf(2)
                 )
         );
@@ -144,7 +144,7 @@ public class DebtorNotificationServiceIntegrationTests {
                 EmailType.ALL_DEBTOR_NOTIFICATION,
                 Map.of("firstName", debtor2.getFirstName(),
                         "lastName", debtor2.getLastName(),
-                        "debt", String.valueOf(debtor2.getTaxesDept()),
+                        "debt", String.valueOf(debtor2.getTaxesDebt()),
                         "numberOfDebtors", String.valueOf(2)
                 )
         );
@@ -187,7 +187,7 @@ public class DebtorNotificationServiceIntegrationTests {
                 EmailType.ALL_DEBTOR_NOTIFICATION,
                 Map.of("firstName", debtor.getFirstName(),
                         "lastName", debtor.getLastName(),
-                        "debt", String.valueOf(debtor.getTaxesDept()),
+                        "debt", String.valueOf(debtor.getTaxesDebt()),
                         "numberOfDebtors", String.valueOf(1)
                 )
         );
@@ -251,7 +251,7 @@ public class DebtorNotificationServiceIntegrationTests {
                 EmailType.SINGLE_DEBTOR_NOTIFICATION,
                 Map.of("firstName", debtor.getFirstName(),
                         "lastName", debtor.getLastName(),
-                        "debt", String.valueOf(debtor.getTaxesDept()),
+                        "debt", String.valueOf(debtor.getTaxesDebt()),
                         "hasChildren", "No",
                         "familyStatus", "Single")
         );

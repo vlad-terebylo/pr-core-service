@@ -1,7 +1,9 @@
 package com.tvo.propertyregister.controller;
 
 import com.tvo.propertyregister.model.dto.BooleanResponseDto;
+import com.tvo.propertyregister.model.dto.CreateOwnerDto;
 import com.tvo.propertyregister.model.dto.TaxObligationResponseDto;
+import com.tvo.propertyregister.model.dto.UpdateOwnerDto;
 import com.tvo.propertyregister.model.owner.Owner;
 import com.tvo.propertyregister.model.property.Property;
 import com.tvo.propertyregister.service.OwnerService;
@@ -41,7 +43,8 @@ public class OwnerController {
     }
 
     @PostMapping
-    public ResponseEntity<BooleanResponseDto> addNewOwner(@RequestBody Owner owner) {
+    public ResponseEntity<BooleanResponseDto> addNewOwner(@RequestBody CreateOwnerDto ownerDto) {
+        Owner owner = new Owner(ownerDto);
         return ResponseEntity.ok(new BooleanResponseDto(this.ownerService.addNewOwner(owner)));
     }
 
@@ -51,7 +54,8 @@ public class OwnerController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<BooleanResponseDto> updateInfo(@PathVariable int id, @RequestBody Owner owner) {
+    public ResponseEntity<BooleanResponseDto> updateInfo(@PathVariable int id, @RequestBody UpdateOwnerDto updateOwnerDto) {
+        Owner owner = new Owner(updateOwnerDto);
         return ResponseEntity.ok(new BooleanResponseDto(this.ownerService.updateInfo(id, owner)));
     }
 

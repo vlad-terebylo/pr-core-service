@@ -41,9 +41,9 @@ public class MongoDbOwnerRepository implements OwnerRepository {
     @Override
     public List<Owner> findDebtors() {
         Aggregation aggregation = Aggregation.newAggregation(
-                Aggregation.match(Criteria.where("taxesDept").gt("0")),
+                Aggregation.match(Criteria.where("taxesDebt").gt("0")),
                 Aggregation.project("id", "firstName", "lastName", "age", "familyStatus", "hasChildren", "email", "phoneNumber", "birthday", "properties")
-                        .andExpression("toDouble(taxesDept)").as("taxesDept")
+                        .andExpression("toDouble(taxesDebt)").as("taxesDebt")
         );
 
         AggregationResults<Owner> results = mongoTemplate.aggregate(aggregation, OWNERS_COLLECTION, Owner.class);
@@ -70,8 +70,7 @@ public class MongoDbOwnerRepository implements OwnerRepository {
                 .set("email", owner.getEmail())
                 .set("phoneNumber", owner.getPhoneNumber())
                 .set("birthday", owner.getBirthday())
-                .set("taxesDept", owner.getTaxesDept())
-                .set("properties", owner.getProperties());
+                .set("taxesDebt", owner.getTaxesDebt());
         UpdateResult result = mongoTemplate.updateFirst(criteria, update, Owner.class, OWNERS_COLLECTION);
 
         return result.getModifiedCount() > 0;

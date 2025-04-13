@@ -17,7 +17,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -50,7 +49,7 @@ public class DebtorNotificationServiceTest {
         Map<String, String> params = Map.of(
                 "firstName", debtor.getFirstName(),
                 "lastName", debtor.getLastName(),
-                "debt", String.valueOf(debtor.getTaxesDept()),
+                "debt", String.valueOf(debtor.getTaxesDebt()),
                 "numberOfDebtors", String.valueOf(1));
 
         EmailEventDto expectedEmailDto = new EmailEventDto(
@@ -105,7 +104,7 @@ public class DebtorNotificationServiceTest {
         Map<String, String> params = Map.of(
                 "firstName", debtor.getFirstName(),
                 "lastName", debtor.getLastName(),
-                "debt", String.valueOf(debtor.getTaxesDept()),
+                "debt", String.valueOf(debtor.getTaxesDebt()),
                 "hasChildren", hasChildren,
                 "familyStatus", familyStatus);
 
@@ -123,7 +122,7 @@ public class DebtorNotificationServiceTest {
 
     @Test
     void should_not_notify_debtor_by_id_when_owner_has_no_debt() {
-        debtor.setTaxesDept(new BigDecimal("0"));
+        debtor.setTaxesDebt(new BigDecimal("0"));
         when(ownerService.getOwnerById(1)).thenReturn(debtor);
 
         assertThrows(DontHaveTaxDebtsException.class, () -> debtorNotificationService.notifyDebtorById(1));

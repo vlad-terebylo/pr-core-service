@@ -35,10 +35,10 @@ public class OwnerService {
         List<Owner> allDebtors = this.ownerRepository.findDebtors();
 
         allDebtors.stream()
-                .filter(debtor -> debtor.getTaxesDept().compareTo(new BigDecimal("0")) > 0)
+                .filter(debtor -> debtor.getTaxesDebt().compareTo(new BigDecimal("0")) > 0)
                 .map(debtor -> {
-                    BigDecimal recalculatedDebt = debtor.getTaxesDept().multiply(new BigDecimal("1.05"));
-                    return debtor.withTaxesDept(recalculatedDebt);
+                    BigDecimal recalculatedDebt = debtor.getTaxesDebt().multiply(new BigDecimal("1.05"));
+                    return debtor.withTaxesDebt(recalculatedDebt);
                 })
                 .forEach(updatedDebtor -> ownerRepository.update(updatedDebtor.getId(), updatedDebtor));
     }

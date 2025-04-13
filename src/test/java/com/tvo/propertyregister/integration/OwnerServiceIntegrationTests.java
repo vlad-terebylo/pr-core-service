@@ -158,7 +158,7 @@ public class OwnerServiceIntegrationTests {
         ownerService.recountDebtForDebtors();
 
         Owner nonDebtor = ownerService.getOwnerById(SINGLE_OWNER_WITHOUT_CHILDREN.getId());
-        assertEquals(BigDecimal.ZERO, nonDebtor.getTaxesDept());
+        assertEquals(BigDecimal.ZERO, nonDebtor.getTaxesDebt());
     }
 
     @Test
@@ -177,7 +177,7 @@ public class OwnerServiceIntegrationTests {
         Owner updatedDebtor = ownerService.getOwnerById(debtor.getId());
         BigDecimal expectedDebt = new BigDecimal("10500.00");
 
-        assertEquals(expectedDebt, updatedDebtor.getTaxesDept());
+        assertEquals(expectedDebt, updatedDebtor.getTaxesDebt());
     }
 
     @Test
@@ -202,11 +202,11 @@ public class OwnerServiceIntegrationTests {
 
         Owner updatedDebtor1 = ownerService.getOwnerById(debtor.getId());
         BigDecimal expectedDebt1 = new BigDecimal("10500.00");
-        assertEquals(expectedDebt1, updatedDebtor1.getTaxesDept());
+        assertEquals(expectedDebt1, updatedDebtor1.getTaxesDebt());
 
         Owner updatedDebtor2 = ownerService.getOwnerById(debtor2.getId());
         BigDecimal expectedDebt2 = new BigDecimal("21000.00");
-        assertEquals(expectedDebt2, updatedDebtor2.getTaxesDept());
+        assertEquals(expectedDebt2, updatedDebtor2.getTaxesDebt());
     }
 
     @Test
@@ -224,11 +224,11 @@ public class OwnerServiceIntegrationTests {
         ownerService.recountDebtForDebtors();
 
         Owner nonDebtor = ownerService.getOwnerById(SINGLE_OWNER_WITHOUT_CHILDREN.getId());
-        assertEquals(BigDecimal.ZERO, nonDebtor.getTaxesDept());
+        assertEquals(BigDecimal.ZERO, nonDebtor.getTaxesDebt());
 
         Owner updatedDebtor = ownerService.getOwnerById(debtor.getId());
         BigDecimal expectedDebt = new BigDecimal("10500.00");
-        assertEquals(expectedDebt, updatedDebtor.getTaxesDept());
+        assertEquals(expectedDebt, updatedDebtor.getTaxesDebt());
     }
 
     @Test
@@ -237,7 +237,7 @@ public class OwnerServiceIntegrationTests {
 
         BigDecimal expectedDept = new BigDecimal("0");
 
-        assertEquals(expectedDept, SINGLE_OWNER_WITHOUT_CHILDREN.getTaxesDept());
+        assertEquals(expectedDept, SINGLE_OWNER_WITHOUT_CHILDREN.getTaxesDebt());
     }
 
     @Test

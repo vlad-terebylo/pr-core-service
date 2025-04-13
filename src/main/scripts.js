@@ -29,7 +29,7 @@ db.owners.insertMany([
         "email": "john.doe@example.com",
         "phoneNumber": "+1234567890",
         "birthday": ISODate("1979-05-15T00:00:00Z"),
-        "taxesDept": "15000.50",
+        "taxesDebt": "15000.50",
         "properties": [
             {
                 "_id": 1,
