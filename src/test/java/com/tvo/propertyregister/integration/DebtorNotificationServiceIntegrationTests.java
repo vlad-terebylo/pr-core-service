@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tvo.propertyregister.exception.DontHaveTaxDebtsException;
 import com.tvo.propertyregister.exception.NoDebtorsInDebtorListException;
 import com.tvo.propertyregister.exception.NoSuchOwnerException;
-import com.tvo.propertyregister.integration.config.TestConfig;
+import com.tvo.propertyregister.integration.config.repository.OwnerTestRepository;
 import com.tvo.propertyregister.model.dto.EmailEventDto;
 import com.tvo.propertyregister.model.dto.EmailType;
 import com.tvo.propertyregister.model.owner.FamilyStatus;
@@ -13,7 +13,6 @@ import com.tvo.propertyregister.model.owner.Owner;
 import com.tvo.propertyregister.model.property.Property;
 import com.tvo.propertyregister.model.property.PropertyCondition;
 import com.tvo.propertyregister.model.property.PropertyType;
-import com.tvo.propertyregister.repository.OwnerRepository;
 import com.tvo.propertyregister.service.DebtorNotificationService;
 import com.tvo.propertyregister.service.EmailSender;
 import org.junit.jupiter.api.BeforeAll;
@@ -21,9 +20,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Import;
-import org.springframework.test.context.ActiveProfiles;
 import org.testcontainers.containers.RabbitMQContainer;
 
 import java.math.BigDecimal;
@@ -35,13 +31,10 @@ import java.util.Objects;
 import static com.tvo.propertyregister.service.utils.Constants.EMAIL_TOPIC;
 import static org.junit.jupiter.api.Assertions.*;
 
-@SpringBootTest
-@ActiveProfiles("test")
-@Import(TestConfig.class)
-public class DebtorNotificationServiceIntegrationTests {
+public class DebtorNotificationServiceIntegrationTests extends AbstractServiceTest {
 
     @Autowired
-    private OwnerRepository ownerRepository;
+    private OwnerTestRepository ownerTestRepository;
 
     @Autowired
     private RabbitTemplate rabbitTemplate;
@@ -79,7 +72,7 @@ public class DebtorNotificationServiceIntegrationTests {
 
     @BeforeEach
     void cleanUp() {
-        ownerRepository.clear();
+        ownerTestRepository.clear();
     }
 
     @Test
@@ -89,7 +82,7 @@ public class DebtorNotificationServiceIntegrationTests {
                 false, "frankjohn@gmail.com",
                 "+456987123",
                 LocalDate.of(1994, 5, 9),
-                new BigDecimal("10000"), List.of(HOUSE_1));
+                new BigDecimal("10000.0"), List.of(HOUSE_1));
 
         EmailEventDto expectedEmailDto = new EmailEventDto(
                 debtor.getEmail(),
@@ -101,7 +94,7 @@ public class DebtorNotificationServiceIntegrationTests {
                 )
         );
 
-        ownerRepository.save(debtor);
+        ownerTestRepository.save(debtor);
 
         debtorNotificationService.notifyAllDebtors();
 
@@ -121,13 +114,13 @@ public class DebtorNotificationServiceIntegrationTests {
                 false, "frankjohn@gmail.com",
                 "+456987123",
                 LocalDate.of(1994, 5, 9),
-                new BigDecimal("10000"), List.of(HOUSE_1));
+                new BigDecimal("10000.0"), List.of(HOUSE_1));
 
         Owner debtor2 = new Owner(2, "Alice", "Wonder",
                 28, FamilyStatus.SINGLE,
                 false, "alicewonder@gmail.com",
                 "+111111111", LocalDate.of(1997, 1, 1),
-                new BigDecimal("20000"), List.of(HOUSE_2));
+                new BigDecimal("20000.0"), List.of(HOUSE_2));
 
         EmailEventDto expectedEmailDto1 = new EmailEventDto(
                 debtor1.getEmail(),
@@ -149,8 +142,8 @@ public class DebtorNotificationServiceIntegrationTests {
                 )
         );
 
-        ownerRepository.save(debtor1);
-        ownerRepository.save(debtor2);
+        ownerTestRepository.save(debtor1);
+        ownerTestRepository.save(debtor2);
 
         debtorNotificationService.notifyAllDebtors();
 
@@ -174,7 +167,7 @@ public class DebtorNotificationServiceIntegrationTests {
                 false, "frankjohn@gmail.com",
                 "+456987123",
                 LocalDate.of(1994, 5, 9),
-                new BigDecimal("10000"), List.of(HOUSE_1));
+                new BigDecimal("10000.0"), List.of(HOUSE_1));
 
         Owner owner = new Owner(2, "Alice", "Wonder",
                 28, FamilyStatus.SINGLE,
@@ -192,8 +185,8 @@ public class DebtorNotificationServiceIntegrationTests {
                 )
         );
 
-        ownerRepository.save(debtor);
-        ownerRepository.save(owner);
+        ownerTestRepository.save(debtor);
+        ownerTestRepository.save(owner);
 
         debtorNotificationService.notifyAllDebtors();
 
@@ -256,7 +249,7 @@ public class DebtorNotificationServiceIntegrationTests {
                         "familyStatus", "Single")
         );
 
-        ownerRepository.save(debtor);
+        ownerTestRepository.save(debtor);
 
         debtorNotificationService.notifyDebtorById(debtor.getId());
 
@@ -283,7 +276,7 @@ public class DebtorNotificationServiceIntegrationTests {
                 LocalDate.of(1994, 5, 9),
                 new BigDecimal("0"), List.of(HOUSE_1));
 
-        ownerRepository.save(debtor);
+        ownerTestRepository.save(debtor);
 
         assertThrows(DontHaveTaxDebtsException.class, () -> debtorNotificationService.notifyDebtorById(debtor.getId()));
     }

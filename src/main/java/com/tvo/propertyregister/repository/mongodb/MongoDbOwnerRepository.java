@@ -84,11 +84,6 @@ public class MongoDbOwnerRepository implements OwnerRepository {
         return result.getDeletedCount() > 0;
     }
 
-    @Override
-    public void clear() {
-
-    }
-
     private int getNextOwnerId() {
         Query query = new Query(Criteria.where("_id").is("ownerId"));
         Update update = new Update().inc("sequence_value", 1);

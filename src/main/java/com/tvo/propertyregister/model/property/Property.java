@@ -1,5 +1,7 @@
 package com.tvo.propertyregister.model.property;
 
+import com.tvo.propertyregister.model.dto.CreatePropertyDto;
+import com.tvo.propertyregister.model.dto.UpdatePropertyDto;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -21,4 +23,23 @@ public class Property {
     private LocalDate dateOfBecomingOwner;
     private LocalDate dateOfBuilding;
     private PropertyCondition propertyCondition;
+
+    public Property(CreatePropertyDto createPropertyDto) {
+        this.propertyType = createPropertyDto.propertyType();
+        this.city = createPropertyDto.city();
+        this.address = createPropertyDto.address();
+        this.square = createPropertyDto.square();
+        this.numberOfRooms = createPropertyDto.numberOfRooms();
+        this.cost = createPropertyDto.cost();
+        this.dateOfBecomingOwner = createPropertyDto.dateOfBecomingOwner();
+        this.dateOfBuilding = createPropertyDto.dateOfBuilding();
+        this.propertyCondition = createPropertyDto.propertyCondition();
+    }
+
+    public Property(UpdatePropertyDto updatePropertyDto) {
+        this.city = updatePropertyDto.city();
+        this.address = updatePropertyDto.address();
+        this.numberOfRooms = updatePropertyDto.numberOfRooms();
+        this.propertyCondition = updatePropertyDto.propertyCondition();
+    }
 }

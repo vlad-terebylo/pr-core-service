@@ -68,18 +68,12 @@ public class InMemoryPropertyRepository implements PropertyRepository {
     }
 
     @Override
-    public boolean save(int ownerId, List<Property> properties) {
-        return false;
-    }
-
-
-    @Override
-    public boolean update(Owner owner) {
+    public boolean save(Owner owner, Property property) {
         return false;
     }
 
     @Override
-    public boolean remove(int ownerId, List<Property> updatedProperties) {
+    public boolean update(int ownerId, List<Property> updatedProperties) {
         return false;
     }
 }

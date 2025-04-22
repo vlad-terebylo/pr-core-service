@@ -2,22 +2,19 @@ package com.tvo.propertyregister.integration;
 
 import com.tvo.propertyregister.exception.NoSuchOwnerException;
 import com.tvo.propertyregister.exception.UpdateOwnerFailedException;
-import com.tvo.propertyregister.integration.config.TestConfig;
+import com.tvo.propertyregister.integration.config.repository.OwnerTestRepository;
+import com.tvo.propertyregister.integration.config.repository.TaxRateTestRepository;
 import com.tvo.propertyregister.model.TaxRate;
 import com.tvo.propertyregister.model.owner.FamilyStatus;
 import com.tvo.propertyregister.model.owner.Owner;
 import com.tvo.propertyregister.model.property.Property;
 import com.tvo.propertyregister.model.property.PropertyCondition;
 import com.tvo.propertyregister.model.property.PropertyType;
-import com.tvo.propertyregister.repository.OwnerRepository;
 import com.tvo.propertyregister.service.OwnerService;
-import com.tvo.propertyregister.service.TaxRateService;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Import;
-import org.springframework.test.context.ActiveProfiles;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -25,19 +22,19 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@SpringBootTest
-@ActiveProfiles("test")
-@Import(TestConfig.class)
-public class OwnerServiceIntegrationTests {
+
+public class OwnerServiceIntegrationTests extends AbstractServiceTest {
 
     @Autowired
     private OwnerService ownerService;
 
     @Autowired
-    private OwnerRepository ownerRepository;
+    private OwnerTestRepository ownerTestRepository;
 
     @Autowired
-    private TaxRateService taxRateService;
+    private TaxRateTestRepository taxRateTestRepository;
+
+    private static final int INVALID_ID = -1;
 
     private static final Property FLAT = new Property(
             1, PropertyType.FLAT, "Prague", "Heroev Street 24",
@@ -76,7 +73,7 @@ public class OwnerServiceIntegrationTests {
             false, "frankjohn@gmail.com",
             "+456987123",
             LocalDate.of(1994, 5, 9),
-            new BigDecimal("10000"), List.of(HOUSE_2));
+            new BigDecimal("10000.0"), List.of(HOUSE_2));
 
     private static final List<TaxRate> taxRates = List.of(
             new TaxRate(1, PropertyType.FLAT, new BigDecimal("6")),
@@ -85,51 +82,57 @@ public class OwnerServiceIntegrationTests {
     );
 
     @BeforeEach
+    public void init() {
+        taxRateTestRepository.initTaxRates();
+    }
+
+    @AfterEach
     public void cleanUp() {
-        ownerRepository.clear();
+        ownerTestRepository.clear();
+        taxRateTestRepository.clear();
     }
 
     @Test
     void should_return_all_owners_when_the_list_is_empty() {
-        List<Owner> owners = ownerService.getAllOwners();
-        assertEquals(ownerService.getAllOwners(), owners);
+        List<Owner> result = ownerService.getAllOwners();
+        assertEquals(List.of(), result);
     }
 
     @Test
     void should_return_all_owners_when_the_list_is_not_empty() {
         ownerService.addNewOwner(SINGLE_OWNER_WITHOUT_CHILDREN);
 
-        List<Owner> owners = ownerService.getAllOwners();
-        assertEquals(ownerService.getAllOwners(), owners);
+        List<Owner> result = ownerService.getAllOwners();
+        assertEquals(List.of(SINGLE_OWNER_WITHOUT_CHILDREN), result);
     }
 
     @Test
     void should_return_owner_by_id() {
         ownerService.addNewOwner(SINGLE_OWNER_WITHOUT_CHILDREN);
-        Owner gotOwner = ownerService.getOwnerById(SINGLE_OWNER_WITHOUT_CHILDREN.getId());
+        Owner createdOwner = ownerService.getOwnerById(SINGLE_OWNER_WITHOUT_CHILDREN.getId());
 
-        assertEquals(ownerService.getOwnerById(SINGLE_OWNER_WITHOUT_CHILDREN.getId()), gotOwner);
+        assertEquals(SINGLE_OWNER_WITHOUT_CHILDREN, createdOwner);
     }
 
     @Test
     void should_return_owner_by_id_if_id_is_wrong() {
-        assertThrows(NoSuchOwnerException.class, () -> ownerService.getOwnerById(1));
+        assertThrows(NoSuchOwnerException.class, () -> ownerService.getOwnerById(INVALID_ID));
     }
 
     @Test
     void should_return_all_debtors_when_the_list_is_not_empty_but_no_debtors() {
         ownerService.addNewOwner(SINGLE_OWNER_WITHOUT_CHILDREN);
 
-        List<Owner> expectedDebtors = ownerService.findDebtors();
+        List<Owner> result = ownerService.findDebtors();
 
-        assertEquals(expectedDebtors, List.of());
+        assertEquals(List.of(), result);
     }
 
     @Test
     void should_return_all_debtors_when_the_list_is_empty() {
-        List<Owner> expectedDebtors = ownerService.findDebtors();
+        List<Owner> result = ownerService.findDebtors();
 
-        assertEquals(expectedDebtors, List.of());
+        assertEquals(List.of(), result);
     }
 
     @Test
@@ -137,18 +140,18 @@ public class OwnerServiceIntegrationTests {
         ownerService.addNewOwner(SINGLE_OWNER_WITHOUT_CHILDREN);
         ownerService.addNewOwner(DEBTOR);
 
-        List<Owner> expectedDebtors = ownerService.findDebtors();
+        List<Owner> result = ownerService.findDebtors();
 
-        assertEquals(expectedDebtors, List.of(DEBTOR));
+        assertEquals(List.of(DEBTOR), result);
     }
 
     @Test
     void should_return_all_debtors_when_there_is_only_debtors_in_list() {
         ownerService.addNewOwner(DEBTOR);
 
-        List<Owner> expectedDebtors = ownerService.findDebtors();
+        List<Owner> result = ownerService.findDebtors();
 
-        assertEquals(expectedDebtors, List.of(DEBTOR));
+        assertEquals(List.of(DEBTOR), result);
     }
 
     @Test
@@ -175,7 +178,7 @@ public class OwnerServiceIntegrationTests {
         ownerService.recountDebtForDebtors();
 
         Owner updatedDebtor = ownerService.getOwnerById(debtor.getId());
-        BigDecimal expectedDebt = new BigDecimal("10500.00");
+        BigDecimal expectedDebt = new BigDecimal("10500.0");
 
         assertEquals(expectedDebt, updatedDebtor.getTaxesDebt());
     }
@@ -201,11 +204,11 @@ public class OwnerServiceIntegrationTests {
         ownerService.recountDebtForDebtors();
 
         Owner updatedDebtor1 = ownerService.getOwnerById(debtor.getId());
-        BigDecimal expectedDebt1 = new BigDecimal("10500.00");
+        BigDecimal expectedDebt1 = new BigDecimal("10500.0");
         assertEquals(expectedDebt1, updatedDebtor1.getTaxesDebt());
 
         Owner updatedDebtor2 = ownerService.getOwnerById(debtor2.getId());
-        BigDecimal expectedDebt2 = new BigDecimal("21000.00");
+        BigDecimal expectedDebt2 = new BigDecimal("21000.0");
         assertEquals(expectedDebt2, updatedDebtor2.getTaxesDebt());
     }
 
@@ -227,7 +230,7 @@ public class OwnerServiceIntegrationTests {
         assertEquals(BigDecimal.ZERO, nonDebtor.getTaxesDebt());
 
         Owner updatedDebtor = ownerService.getOwnerById(debtor.getId());
-        BigDecimal expectedDebt = new BigDecimal("10500.00");
+        BigDecimal expectedDebt = new BigDecimal("10500.0");
         assertEquals(expectedDebt, updatedDebtor.getTaxesDebt());
     }
 
@@ -242,11 +245,11 @@ public class OwnerServiceIntegrationTests {
 
     @Test
     void should_save_new_owner() {
-        boolean result = ownerService.addNewOwner(SINGLE_OWNER_WITHOUT_CHILDREN);
-        Owner gotOwner = ownerService.getOwnerById(SINGLE_OWNER_WITHOUT_CHILDREN.getId());
+        boolean isAdded = ownerService.addNewOwner(SINGLE_OWNER_WITHOUT_CHILDREN);
+        Owner result = ownerService.getOwnerById(SINGLE_OWNER_WITHOUT_CHILDREN.getId());
 
-        assertTrue(result);
-        assertEquals(ownerService.getOwnerById(SINGLE_OWNER_WITHOUT_CHILDREN.getId()), gotOwner);
+        assertTrue(isAdded);
+        assertEquals(SINGLE_OWNER_WITHOUT_CHILDREN, result);
     }
 
     @Test
@@ -261,22 +264,25 @@ public class OwnerServiceIntegrationTests {
 
         ownerService.addNewOwner(owner);
 
-        assertEquals(ownerService.getOwnerById(id), owner);
+        assertEquals(owner, ownerService.getOwnerById(id));
 
         owner.setFamilyStatus(FamilyStatus.MARRIED);
         owner.setLastName("Faith");
 
         boolean result = ownerService.updateInfo(id, owner);
 
-        ownerService.getOwnerById(id);
-
         assertTrue(result);
-        assertEquals(ownerService.getOwnerById(id), owner);
+        assertEquals(owner, ownerService.getOwnerById(id));
+    }
+
+    @Test
+    void should_not_update_owner_and_throw_exception_if_does_not_exist() {
+        assertThrows(UpdateOwnerFailedException.class, () -> ownerService.updateInfo(1, null));
     }
 
     @Test
     void should_not_update_owner_and_throw_exception_if_not_found_by_id() {
-        assertThrows(UpdateOwnerFailedException.class, () -> ownerService.updateInfo(1, SINGLE_OWNER_WITHOUT_CHILDREN));
+        assertThrows(NoSuchOwnerException.class, () -> ownerService.updateInfo(INVALID_ID, SINGLE_OWNER_WITHOUT_CHILDREN));
     }
 
     @Test
@@ -284,13 +290,12 @@ public class OwnerServiceIntegrationTests {
         ownerService.addNewOwner(SINGLE_OWNER_WITHOUT_CHILDREN);
         Owner gotOwner = ownerService.getOwnerById(SINGLE_OWNER_WITHOUT_CHILDREN.getId());
 
-        assertEquals(ownerService.getOwnerById(SINGLE_OWNER_WITHOUT_CHILDREN.getId()), gotOwner);
+        assertEquals(SINGLE_OWNER_WITHOUT_CHILDREN, gotOwner);
 
         boolean result = ownerService.removeOwner(SINGLE_OWNER_WITHOUT_CHILDREN.getId());
 
         assertTrue(result);
-        assertThrows(NoSuchOwnerException.class, () -> ownerService.getOwnerById(SINGLE_OWNER_WITHOUT_CHILDREN.getId()));
-        assertEquals(ownerService.getAllOwners(), List.of());
+        assertEquals(List.of(), ownerService.getAllOwners());
     }
 
     @Test
@@ -304,8 +309,8 @@ public class OwnerServiceIntegrationTests {
     void should_count_tax_obligations_no_leeway() {
         ownerService.addNewOwner(SINGLE_OWNER_WITHOUT_CHILDREN);
 
-        assertEquals(ownerService.getOwnerById(SINGLE_OWNER_WITHOUT_CHILDREN.getId()), SINGLE_OWNER_WITHOUT_CHILDREN);
-        assertEquals(taxRateService.getAll(), taxRates);
+        assertEquals(SINGLE_OWNER_WITHOUT_CHILDREN, ownerService.getOwnerById(SINGLE_OWNER_WITHOUT_CHILDREN.getId()));
+        assertEquals(taxRateTestRepository.findAll(), taxRates);
 
         BigDecimal expectedTaxObligation = new BigDecimal("420");
         BigDecimal realTaxObligation = ownerService.countTaxObligation(SINGLE_OWNER_WITHOUT_CHILDREN.getId());
@@ -318,7 +323,7 @@ public class OwnerServiceIntegrationTests {
         ownerService.addNewOwner(MARRIED_OWNER_WITH_CHILDREN);
 
         assertEquals(ownerService.getOwnerById(MARRIED_OWNER_WITH_CHILDREN.getId()), MARRIED_OWNER_WITH_CHILDREN);
-        assertEquals(taxRateService.getAll(), taxRates);
+        assertEquals(taxRateTestRepository.findAll(), taxRates);
 
         BigDecimal expectedTaxObligation = new BigDecimal("960.0");
         BigDecimal realTaxObligation = ownerService.countTaxObligation(MARRIED_OWNER_WITH_CHILDREN.getId());
@@ -339,7 +344,7 @@ public class OwnerServiceIntegrationTests {
         ownerService.addNewOwner(owner);
 
         assertEquals(ownerService.getOwnerById(id), owner);
-        assertEquals(taxRateService.getAll(), taxRates);
+        assertEquals(taxRateTestRepository.findAll(), taxRates);
 
         BigDecimal expectedTaxObligation = new BigDecimal("378.0");
         BigDecimal realTaxObligation = ownerService.countTaxObligation(id);
@@ -360,7 +365,7 @@ public class OwnerServiceIntegrationTests {
         ownerService.addNewOwner(owner);
 
         assertEquals(ownerService.getOwnerById(id), owner);
-        assertEquals(taxRateService.getAll(), taxRates);
+        assertEquals(taxRateTestRepository.findAll(), taxRates);
 
         BigDecimal expectedTaxObligation = new BigDecimal("294.0");
         BigDecimal realTaxObligation = ownerService.countTaxObligation(id);

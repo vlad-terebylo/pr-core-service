@@ -1,5 +1,6 @@
 package com.tvo.propertyregister.repository;
 
+import com.fasterxml.jackson.databind.annotation.JsonAppend;
 import com.tvo.propertyregister.model.owner.Owner;
 import com.tvo.propertyregister.model.property.Property;
 
@@ -7,11 +8,10 @@ import java.util.List;
 
 public interface PropertyRepository {
 
-    List<Property> findAll(int owner_id);
+    List<Property> findAll(int ownerId);
 
-    boolean save(int ownerId, List<Property> properties);
+    boolean save(Owner owner, Property property);
 
-    boolean update(Owner owner);
+    boolean update(int ownerId, List<Property> updatedProperties);
 
-    boolean remove(int ownerId, List<Property> updatedProperties);
 }

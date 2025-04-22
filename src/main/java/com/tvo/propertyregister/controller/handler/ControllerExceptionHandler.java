@@ -55,4 +55,18 @@ public class ControllerExceptionHandler extends ResponseEntityExceptionHandler {
 
         return super.handleExceptionInternal(exception, error, new HttpHeaders(), NO_CONTENT, request);
     }
+
+    @ExceptionHandler(value = PropertyNotFoundException.class)
+    public ResponseEntity<Object> handlePropertyNotFoundException(Exception exception, WebRequest request) {
+        ErrorDto error = new ErrorDto(NOT_FOUND.getReasonPhrase(), exception.getMessage());
+
+        return super.handleExceptionInternal(exception, error, new HttpHeaders(), NOT_FOUND, request);
+    }
+
+    @ExceptionHandler(value = InvalidTaxRateNumberException.class)
+    public ResponseEntity<Object> handleInvalidTaxRateNumberException(Exception exception, WebRequest request) {
+        ErrorDto error = new ErrorDto(INTERNAL_SERVER_ERROR.getReasonPhrase(), exception.getMessage());
+
+        return super.handleExceptionInternal(exception, error, new HttpHeaders(), INTERNAL_SERVER_ERROR, request);
+    }
 }

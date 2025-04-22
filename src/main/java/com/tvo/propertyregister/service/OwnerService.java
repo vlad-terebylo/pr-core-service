@@ -1,5 +1,9 @@
 package com.tvo.propertyregister.service;
 
+import com.tvo.propertyregister.exception.InvalidTaxRateNumberException;
+import com.tvo.propertyregister.exception.NoSuchOwnerException;
+import com.tvo.propertyregister.exception.PropertyNotFoundException;
+import com.tvo.propertyregister.exception.UpdateOwnerFailedException;
 import com.tvo.propertyregister.model.TaxRate;
 import com.tvo.propertyregister.model.owner.FamilyStatus;
 import com.tvo.propertyregister.model.owner.Owner;
@@ -10,7 +14,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
+import java.util.Objects;
+
+import static com.tvo.propertyregister.service.utils.Constants.TAXES_RATE_NUMBER;
 
 @Service
 @RequiredArgsConstructor
@@ -24,6 +32,11 @@ public class OwnerService {
     }
 
     public Owner getOwnerById(int id) {
+        Owner owner = ownerRepository.findById(id);
+        if (Objects.isNull(owner)) {
+            throw new NoSuchOwnerException("The owner with id " + id + " was not found");
+        }
+
         return this.ownerRepository.findById(id);
     }
 
@@ -38,17 +51,31 @@ public class OwnerService {
                 .filter(debtor -> debtor.getTaxesDebt().compareTo(new BigDecimal("0")) > 0)
                 .map(debtor -> {
                     BigDecimal recalculatedDebt = debtor.getTaxesDebt().multiply(new BigDecimal("1.05"));
-                    return debtor.withTaxesDebt(recalculatedDebt);
+                    BigDecimal roundedDebts = recalculatedDebt.setScale(1, RoundingMode.HALF_UP);
+                    return debtor.withTaxesDebt(roundedDebts);
                 })
                 .forEach(updatedDebtor -> ownerRepository.update(updatedDebtor.getId(), updatedDebtor));
     }
 
     public boolean addNewOwner(Owner owner) {
+        if (Objects.isNull(owner)) {
+            throw new NoSuchOwnerException("This owner does not exists");
+        }
+
         return this.ownerRepository.save(owner);
     }
 
-    public boolean updateInfo(int id, Owner owner) {
-        return this.ownerRepository.update(id, owner);
+    public boolean updateInfo(int id, Owner ownerToUpdate) {
+        if (Objects.isNull(ownerToUpdate)) {
+            throw new UpdateOwnerFailedException("Updating owner was failed");
+        }
+
+        Owner owner = this.ownerRepository.findById(id);
+        if (Objects.isNull(owner)) {
+            throw new NoSuchOwnerException("This owner does not exists");
+        }
+
+        return this.ownerRepository.update(id, ownerToUpdate);
     }
 
     public boolean removeOwner(int id) {
@@ -57,6 +84,10 @@ public class OwnerService {
 
     public BigDecimal countTaxObligation(int id) {
         Owner owner = this.ownerRepository.findById(id);
+
+        if (Objects.isNull(owner)) {
+            throw new NoSuchOwnerException("This owner does not exists");
+        }
 
         BigDecimal leeway = new BigDecimal("1");
         BigDecimal taxObligation = countBaseTax(owner);
@@ -77,7 +108,14 @@ public class OwnerService {
 
     private BigDecimal countBaseTax(Owner owner) {
         List<Property> properties = owner.getProperties();
+        if (Objects.isNull(properties)) {
+            throw new PropertyNotFoundException("The list of property does not exist");
+        }
+
         List<TaxRate> taxRates = this.taxRateService.getAll();
+        if (taxRates.size() != TAXES_RATE_NUMBER) {
+            throw new InvalidTaxRateNumberException("Invalid number of tax rates. Current size is " + taxRates.size());
+        }
 
         BigDecimal FLAT_TAX = taxRates.get(0).getTax();
         BigDecimal HOUSE_TAX = taxRates.get(1).getTax();

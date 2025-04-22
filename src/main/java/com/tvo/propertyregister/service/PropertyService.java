@@ -31,7 +31,7 @@ public class PropertyService {
         return this.propertyRepository.findAll(ownerId);
     }
 
-    public boolean addNewProperty(int ownerId, Property property) {
+    public boolean save(int ownerId, Property property) {
         if (Objects.isNull(property)) {
             throw new PropertyNotFoundException("This property is empty");
         }
@@ -45,14 +45,10 @@ public class PropertyService {
             owner.setProperties(new ArrayList<>());
         }
 
-        List<Property> properties = owner.getProperties();
-        properties.add(property);
-        owner.setProperties(properties);
-
-        return this.propertyRepository.save(ownerId, owner.getProperties());
+        return this.propertyRepository.save(owner, property);
     }
 
-    public boolean updatePropertyInfo(int ownerId, int propertyId, Property property) {
+    public boolean update(int ownerId, int propertyId, Property property) {
         if (Objects.isNull(property)) {
             throw new PropertyNotFoundException("This property is empty");
         }
@@ -67,12 +63,18 @@ public class PropertyService {
                 .findFirst()
                 .orElseThrow(() -> new PropertyNotFoundException("Property not found with ID: " + propertyId));
 
-
+        propertyToUpdate.setCity(property.getCity());
+        propertyToUpdate.setAddress(property.getAddress());
         propertyToUpdate.setNumberOfRooms(property.getNumberOfRooms());
-        propertyToUpdate.setCost(property.getCost());
-        propertyToUpdate.setDateOfBecomingOwner(property.getDateOfBecomingOwner());
+        propertyToUpdate.setPropertyCondition(property.getPropertyCondition());
 
-        return this.propertyRepository.update(owner);
+        List<Property> allProperties = new ArrayList<>(owner.getProperties().stream()
+                .filter(currentProperty -> currentProperty.getId() != propertyId)
+                .toList());
+
+        allProperties.add(propertyToUpdate);
+
+        return this.propertyRepository.update(ownerId, allProperties);
     }
 
     public boolean remove(int ownerId, int propertyId) {
@@ -89,6 +91,6 @@ public class PropertyService {
             throw new PropertyNotFoundException("Property with id " + propertyId + " not found");
         }
 
-        return this.propertyRepository.remove(ownerId, filtered);
+        return this.propertyRepository.update(ownerId, filtered);
     }
 }

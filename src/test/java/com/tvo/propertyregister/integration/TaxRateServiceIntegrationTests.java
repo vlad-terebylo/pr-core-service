@@ -1,32 +1,25 @@
 package com.tvo.propertyregister.integration;
 
-import com.tvo.propertyregister.integration.config.TestConfig;
+import com.tvo.propertyregister.integration.config.repository.TaxRateTestRepository;
 import com.tvo.propertyregister.model.TaxRate;
 import com.tvo.propertyregister.model.property.PropertyType;
-import com.tvo.propertyregister.repository.TaxRateRepository;
 import com.tvo.propertyregister.service.TaxRateService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Import;
-import org.springframework.test.context.ActiveProfiles;
 
 import java.math.BigDecimal;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@SpringBootTest
-@ActiveProfiles("test")
-@Import(TestConfig.class)
-public class TaxRateServiceIntegrationTests {
+public class TaxRateServiceIntegrationTests extends AbstractServiceTest {
 
     @Autowired
     private TaxRateService taxRateService;
 
     @Autowired
-    private TaxRateRepository taxRateRepository;
+    private TaxRateTestRepository taxRateTestRepository;
 
     private static final List<TaxRate> TAX_RATES = List.of(
             new TaxRate(1, PropertyType.FLAT, new BigDecimal("6")),
@@ -36,14 +29,10 @@ public class TaxRateServiceIntegrationTests {
 
     @BeforeEach
     void initTaxRates() {
-        cleanUp();
+        taxRateTestRepository.clear();
+        taxRateTestRepository.initTaxRates();
     }
 
-    private void cleanUp() {
-        taxRateRepository.changeTax(PropertyType.FLAT, new BigDecimal(6));
-        taxRateRepository.changeTax(PropertyType.HOUSE, new BigDecimal(8));
-        taxRateRepository.changeTax(PropertyType.OFFICE, new BigDecimal(13));
-    }
 
     @Test
     void should_get_tax_rates() {

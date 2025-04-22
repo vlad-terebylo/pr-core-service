@@ -18,5 +18,4 @@ public interface OwnerRepository {
 
     boolean remove(int id);
 
-    void clear();
 }

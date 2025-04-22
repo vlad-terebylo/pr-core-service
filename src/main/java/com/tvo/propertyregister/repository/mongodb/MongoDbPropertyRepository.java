@@ -12,7 +12,9 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import static java.util.Objects.requireNonNull;
 
@@ -31,24 +33,21 @@ public class MongoDbPropertyRepository implements PropertyRepository {
         return owners.get(0).getProperties();
     }
 
-    public boolean save(int ownerId, List<Property> updatedProperties) {
-        Query criteria = new Query(Criteria.where("id").is(ownerId));
-        updatedProperties.get(updatedProperties.size() - 1).setId(getNextPropertyId());
+    public boolean save(Owner owner, Property property) {
+        Query criteria = new Query(Criteria.where("id").is(owner.getId()));
+        property.setId(getNextPropertyId());
 
-        Update update = new Update().set("properties", updatedProperties);
+        List<Property> allProperties = owner.getProperties();
+        allProperties.add(property);
+
+        Update update = new Update().set("properties", allProperties);
         UpdateResult result = mongoTemplate.updateFirst(criteria, update, Owner.class, OWNERS_COLLECTION);
 
         return result.getModifiedCount() > 0;
     }
 
     @Override
-    public boolean update(Owner owner) {
-        mongoTemplate.save(owner, OWNERS_COLLECTION);
-        return true;
-    }
-
-    @Override
-    public boolean remove(int ownerId, List<Property> properties) {
+    public boolean update(int ownerId, List<Property> properties) {
         Query criteria = new Query(Criteria.where("id").is(ownerId));
 
         Update update = new Update().set("properties", properties);
