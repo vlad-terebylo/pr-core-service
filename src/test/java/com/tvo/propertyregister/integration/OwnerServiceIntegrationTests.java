@@ -11,10 +11,10 @@ import com.tvo.propertyregister.model.property.Property;
 import com.tvo.propertyregister.model.property.PropertyCondition;
 import com.tvo.propertyregister.model.property.PropertyType;
 import com.tvo.propertyregister.service.OwnerService;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -80,6 +80,22 @@ public class OwnerServiceIntegrationTests extends AbstractServiceTest {
             new TaxRate(2, PropertyType.HOUSE, new BigDecimal("8")),
             new TaxRate(3, PropertyType.OFFICE, new BigDecimal("13"))
     );
+
+    @DynamicPropertySource
+    static void setProperties(DynamicPropertyRegistry registry) {
+        registry.add("spring.data.mongodb.host", MONGO_DB_CONTAINER::getHost);
+        registry.add("spring.data.mongodb.port", MONGO_DB_CONTAINER::getFirstMappedPort);
+    }
+
+    @BeforeAll
+    public static void startContainer() {
+        MONGO_DB_CONTAINER.start();
+    }
+
+    @AfterAll
+    public static void stopContainer() {
+        MONGO_DB_CONTAINER.stop();
+    }
 
     @BeforeEach
     public void init() {

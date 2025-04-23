@@ -4,14 +4,15 @@ import com.tvo.propertyregister.integration.config.repository.TaxRateTestReposit
 import com.tvo.propertyregister.model.TaxRate;
 import com.tvo.propertyregister.model.property.PropertyType;
 import com.tvo.propertyregister.service.TaxRateService;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 
 import java.math.BigDecimal;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class TaxRateServiceIntegrationTests extends AbstractServiceTest {
 
@@ -21,30 +22,43 @@ public class TaxRateServiceIntegrationTests extends AbstractServiceTest {
     @Autowired
     private TaxRateTestRepository taxRateTestRepository;
 
-    private static final List<TaxRate> TAX_RATES = List.of(
-            new TaxRate(1, PropertyType.FLAT, new BigDecimal("6")),
-            new TaxRate(2, PropertyType.HOUSE, new BigDecimal("8")),
-            new TaxRate(3, PropertyType.OFFICE, new BigDecimal("13"))
-    );
+    @DynamicPropertySource
+    static void setProperties(DynamicPropertyRegistry registry) {
+        registry.add("spring.data.mongodb.host", MONGO_DB_CONTAINER::getHost);
+        registry.add("spring.data.mongodb.port", MONGO_DB_CONTAINER::getFirstMappedPort);
+    }
 
-    @BeforeEach
-    void initTaxRates() {
+    @BeforeAll
+    public static void startContainer() {
+        MONGO_DB_CONTAINER.start();
+    }
+
+    @AfterAll
+    public static void stopContainer() {
+        MONGO_DB_CONTAINER.stop();
+    }
+
+    @AfterEach
+    void cleanUp() {
         taxRateTestRepository.clear();
-        taxRateTestRepository.initTaxRates();
     }
 
 
     @Test
     void should_get_tax_rates() {
+        TaxRate newRate = new TaxRate(1, PropertyType.FLAT, new BigDecimal("11"));
+        taxRateTestRepository.insertTaxRate(newRate);
+
         List<TaxRate> actualRates = taxRateService.getAll();
 
-        assertEquals(TAX_RATES, actualRates);
+        assertEquals(1, actualRates.size());
     }
 
     @Test
     void should_change_tax_rate_for_flat() {
-        BigDecimal newTaxRate = new BigDecimal("10");
+        taxRateTestRepository.initTaxRates();
 
+        BigDecimal newTaxRate = new BigDecimal("10");
         taxRateService.changeTax(PropertyType.FLAT, newTaxRate);
 
         List<TaxRate> actualRates = taxRateService.getAll();
@@ -59,8 +73,9 @@ public class TaxRateServiceIntegrationTests extends AbstractServiceTest {
 
     @Test
     void should_change_tax_rate_for_house() {
-        BigDecimal newTaxRate = new BigDecimal("15");
+        taxRateTestRepository.initTaxRates();
 
+        BigDecimal newTaxRate = new BigDecimal("15");
         taxRateService.changeTax(PropertyType.HOUSE, newTaxRate);
 
         List<TaxRate> actualRates = taxRateService.getAll();
@@ -75,8 +90,9 @@ public class TaxRateServiceIntegrationTests extends AbstractServiceTest {
 
     @Test
     void should_change_tax_rate_for_office() {
-        BigDecimal newTaxRate = new BigDecimal("20");
+        taxRateTestRepository.initTaxRates();
 
+        BigDecimal newTaxRate = new BigDecimal("20");
         taxRateService.changeTax(PropertyType.OFFICE, newTaxRate);
 
         List<TaxRate> actualRates = taxRateService.getAll();

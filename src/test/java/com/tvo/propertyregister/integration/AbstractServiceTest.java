@@ -9,26 +9,14 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.MongoDBContainer;
+import org.testcontainers.containers.RabbitMQContainer;
 
 @SpringBootTest
 @ActiveProfiles("test")
 @Import(TestMongoConfig.class)
 abstract class AbstractServiceTest {
-    private static final MongoDBContainer mongoDBContainer = new MongoDBContainer("mongo:6.0");
-
-    @DynamicPropertySource
-    static void setProperties(DynamicPropertyRegistry registry) {
-        registry.add("spring.data.mongodb.host", mongoDBContainer::getHost);
-        registry.add("spring.data.mongodb.port", mongoDBContainer::getFirstMappedPort);
-    }
-
-    @BeforeAll
-    public static void startContainer() {
-        mongoDBContainer.start();
-    }
-
-    @AfterAll
-    public static void stopContainer() {
-        mongoDBContainer.stop();
-    }
+    protected static final MongoDBContainer MONGO_DB_CONTAINER =
+            new MongoDBContainer("mongo:6.0");
+    protected static final RabbitMQContainer RABBIT_MQ_CONTAINER =
+            new RabbitMQContainer("rabbitmq:3.9-management");
 }

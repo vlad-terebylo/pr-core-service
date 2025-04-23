@@ -11,6 +11,7 @@ import org.springframework.data.mongodb.core.query.Update;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Objects;
 
 @RequiredArgsConstructor
 public class TaxRateTestRepository {
@@ -24,14 +25,6 @@ public class TaxRateTestRepository {
         return mongoTemplate.find(criteria, TaxRate.class, TAX_RATE_COLLECTION);
     }
 
-    public boolean changeTax(PropertyType propertyType, BigDecimal rate) {
-        Query criteria = new Query(Criteria.where("propertyType").is(propertyType.toString()));
-        Update update = new Update().set("tax", rate.toString());
-        UpdateResult result = mongoTemplate.updateFirst(criteria, update, TaxRate.class, TAX_RATE_COLLECTION);
-
-        return result.getModifiedCount() > 0;
-    }
-
     public void initTaxRates() {
         TaxRate flatRate = new TaxRate(1, PropertyType.FLAT, new BigDecimal("6"));
         TaxRate houseRate = new TaxRate(2, PropertyType.HOUSE, new BigDecimal("8"));
@@ -40,6 +33,14 @@ public class TaxRateTestRepository {
         mongoTemplate.insert(flatRate, TAX_RATE_COLLECTION);
         mongoTemplate.insert(houseRate, TAX_RATE_COLLECTION);
         mongoTemplate.insert(officeRate, TAX_RATE_COLLECTION);
+    }
+
+    public void insertTaxRate(TaxRate newRate) {
+        if (Objects.isNull(newRate)) {
+            throw new RuntimeException("New rate is null");
+        }
+
+        mongoTemplate.insert(newRate, TAX_RATE_COLLECTION);
     }
 
     public void clear() {

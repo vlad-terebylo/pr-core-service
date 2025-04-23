@@ -64,11 +64,9 @@ public class PropertyTestRepository {
     }
 
     public void clear() {
-        // to find all owners
         Query criteria = new Query();
         List<Owner> owners = mongoTemplate.find(criteria, Owner.class, OWNERS_COLLECTION);
 
-        // to delete all properties for every property
         for (Owner owner : owners) {
             owner.setProperties(new ArrayList<>());
 
@@ -77,7 +75,6 @@ public class PropertyTestRepository {
             mongoTemplate.updateFirst(updateQuery, update, Owner.class, OWNERS_COLLECTION);
         }
 
-        // to reset counter to
         Query resetPropertyIdQuery = new Query(Criteria.where("_id").is("propertyId"));
         Update update = new Update().set("sequence_value", 1);
         mongoTemplate.updateFirst(resetPropertyIdQuery, update, Document.class, "counters");

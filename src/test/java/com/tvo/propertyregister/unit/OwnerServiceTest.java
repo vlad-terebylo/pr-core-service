@@ -67,7 +67,7 @@ public class OwnerServiceTest {
             true, "lindajohnson@gmail.com",
             "+789456147",
             LocalDate.of(1993, 7, 17),
-            new BigDecimal("10000"), List.of(PROPERTY_FLAT));
+            new BigDecimal("10000.0"), List.of(PROPERTY_FLAT));
 
     private static final TaxRate TAX_RATE_FLAT = new TaxRate(1, PropertyType.FLAT, new BigDecimal("6"));
     private static final TaxRate TAX_RATE_HOUSE = new TaxRate(2, PropertyType.HOUSE, new BigDecimal("8"));
@@ -139,7 +139,12 @@ public class OwnerServiceTest {
     @Test
     void should_recalculate_debt_for_debtors() {
         List<Owner> allDebtors = List.of(DEBTOR);
-        Owner expectedDebtor = allDebtors.get(0).withTaxesDebt(allDebtors.get(0).getTaxesDebt().multiply(new BigDecimal("1.05")));
+        Owner expectedDebtor = new Owner(2, "Linda", "Johnson",
+                31, FamilyStatus.MARRIED,
+                true, "lindajohnson@gmail.com",
+                "+789456147",
+                LocalDate.of(1993, 7, 17),
+                new BigDecimal("10500.0"), List.of(PROPERTY_FLAT));
 
         when(ownerRepository.findDebtors()).thenReturn(allDebtors);
 

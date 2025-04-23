@@ -15,11 +15,14 @@ import com.tvo.propertyregister.model.property.PropertyCondition;
 import com.tvo.propertyregister.model.property.PropertyType;
 import com.tvo.propertyregister.service.DebtorNotificationService;
 import com.tvo.propertyregister.service.EmailSender;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.RabbitMQContainer;
 
 import java.math.BigDecimal;
@@ -48,26 +51,36 @@ public class DebtorNotificationServiceIntegrationTests extends AbstractServiceTe
     @Autowired
     private ObjectMapper mapper;
 
-    private static final Property HOUSE_1 = new Property(2, PropertyType.HOUSE, "Prague", "Boris Niemcov Street 220",
+    private static final Property FIRST_HOUSE = new Property(2, PropertyType.HOUSE, "Prague", "Boris Niemcov Street 220",
             150, 5, new BigDecimal("750000"),
             LocalDate.of(2020, 4, 10),
             LocalDate.of(2012, 1, 9),
             PropertyCondition.GOOD);
 
-    private static final Property HOUSE_2 = new Property(3, PropertyType.HOUSE, "Prague", "Evropska 6",
+    private static final Property SECOND_HOUSE = new Property(3, PropertyType.HOUSE, "Prague", "Evropska 6",
             300, 10, new BigDecimal("1000000"),
             LocalDate.of(2023, 4, 10),
             LocalDate.of(2023, 1, 9),
             PropertyCondition.GOOD);
 
-    private static final RabbitMQContainer RABBIT_MQ_CONTAINER =
-            new RabbitMQContainer("rabbitmq:3.9-management");
+    @DynamicPropertySource
+    static void setProperties(DynamicPropertyRegistry registry) {
+        registry.add("spring.data.mongodb.host", MONGO_DB_CONTAINER::getHost);
+        registry.add("spring.data.mongodb.port", MONGO_DB_CONTAINER::getFirstMappedPort);
+        registry.add("spring.rabbitmq.host", RABBIT_MQ_CONTAINER::getHost);
+        registry.add("spring.rabbitmq.port", RABBIT_MQ_CONTAINER::getAmqpPort);
+    }
 
     @BeforeAll
     static void setUp() {
+        MONGO_DB_CONTAINER.start();
         RABBIT_MQ_CONTAINER.start();
-        System.setProperty("spring.rabbitmq.host", RABBIT_MQ_CONTAINER.getHost());
-        System.setProperty("spring.rabbitmq.port", RABBIT_MQ_CONTAINER.getAmqpPort().toString());
+    }
+
+    @AfterAll
+    public static void stopContainer() {
+        MONGO_DB_CONTAINER.stop();
+        RABBIT_MQ_CONTAINER.stop();
     }
 
     @BeforeEach
@@ -82,7 +95,7 @@ public class DebtorNotificationServiceIntegrationTests extends AbstractServiceTe
                 false, "frankjohn@gmail.com",
                 "+456987123",
                 LocalDate.of(1994, 5, 9),
-                new BigDecimal("10000.0"), List.of(HOUSE_1));
+                new BigDecimal("10000.0"), List.of(FIRST_HOUSE));
 
         EmailEventDto expectedEmailDto = new EmailEventDto(
                 debtor.getEmail(),
@@ -109,55 +122,55 @@ public class DebtorNotificationServiceIntegrationTests extends AbstractServiceTe
 
     @Test
     void should_send_notification_if_there_is_more_than_one_debtor() throws JsonProcessingException {
-        Owner debtor1 = new Owner(1, "Frank", "John",
+        Owner firstDebtor = new Owner(1, "Frank", "John",
                 30, FamilyStatus.SINGLE,
                 false, "frankjohn@gmail.com",
                 "+456987123",
                 LocalDate.of(1994, 5, 9),
-                new BigDecimal("10000.0"), List.of(HOUSE_1));
+                new BigDecimal("10000.0"), List.of(FIRST_HOUSE));
 
-        Owner debtor2 = new Owner(2, "Alice", "Wonder",
+        Owner secondDebtor = new Owner(2, "Alice", "Wonder",
                 28, FamilyStatus.SINGLE,
                 false, "alicewonder@gmail.com",
                 "+111111111", LocalDate.of(1997, 1, 1),
-                new BigDecimal("20000.0"), List.of(HOUSE_2));
+                new BigDecimal("20000.0"), List.of(SECOND_HOUSE));
 
         EmailEventDto expectedEmailDto1 = new EmailEventDto(
-                debtor1.getEmail(),
+                firstDebtor.getEmail(),
                 EmailType.ALL_DEBTOR_NOTIFICATION,
-                Map.of("firstName", debtor1.getFirstName(),
-                        "lastName", debtor1.getLastName(),
-                        "debt", String.valueOf(debtor1.getTaxesDebt()),
+                Map.of("firstName", firstDebtor.getFirstName(),
+                        "lastName", firstDebtor.getLastName(),
+                        "debt", String.valueOf(firstDebtor.getTaxesDebt()),
                         "numberOfDebtors", String.valueOf(2)
                 )
         );
 
         EmailEventDto expectedEmailDto2 = new EmailEventDto(
-                debtor2.getEmail(),
+                secondDebtor.getEmail(),
                 EmailType.ALL_DEBTOR_NOTIFICATION,
-                Map.of("firstName", debtor2.getFirstName(),
-                        "lastName", debtor2.getLastName(),
-                        "debt", String.valueOf(debtor2.getTaxesDebt()),
+                Map.of("firstName", secondDebtor.getFirstName(),
+                        "lastName", secondDebtor.getLastName(),
+                        "debt", String.valueOf(secondDebtor.getTaxesDebt()),
                         "numberOfDebtors", String.valueOf(2)
                 )
         );
 
-        ownerTestRepository.save(debtor1);
-        ownerTestRepository.save(debtor2);
+        ownerTestRepository.save(firstDebtor);
+        ownerTestRepository.save(secondDebtor);
 
         debtorNotificationService.notifyAllDebtors();
 
-        String body = (String) rabbitTemplate.receiveAndConvert(EMAIL_TOPIC);
-        String body2 = (String) rabbitTemplate.receiveAndConvert(EMAIL_TOPIC);
+        String firstBody = (String) rabbitTemplate.receiveAndConvert(EMAIL_TOPIC);
+        String secondBody = (String) rabbitTemplate.receiveAndConvert(EMAIL_TOPIC);
 
-        assertTrue(Objects.nonNull(body));
-        assertTrue(Objects.nonNull(body2));
+        assertTrue(Objects.nonNull(firstBody));
+        assertTrue(Objects.nonNull(secondBody));
 
-        EmailEventDto receivedEmail1 = mapper.readValue(body, EmailEventDto.class);
-        EmailEventDto receivedEmail2 = mapper.readValue(body2, EmailEventDto.class);
+        EmailEventDto firstReceivedEmailDto = mapper.readValue(firstBody, EmailEventDto.class);
+        EmailEventDto secondReceivedEmailDto = mapper.readValue(secondBody, EmailEventDto.class);
 
-        assertEquals(expectedEmailDto1, receivedEmail1);
-        assertEquals(expectedEmailDto2, receivedEmail2);
+        assertEquals(expectedEmailDto1, firstReceivedEmailDto);
+        assertEquals(expectedEmailDto2, secondReceivedEmailDto);
     }
 
     @Test
@@ -167,13 +180,13 @@ public class DebtorNotificationServiceIntegrationTests extends AbstractServiceTe
                 false, "frankjohn@gmail.com",
                 "+456987123",
                 LocalDate.of(1994, 5, 9),
-                new BigDecimal("10000.0"), List.of(HOUSE_1));
+                new BigDecimal("10000.0"), List.of(FIRST_HOUSE));
 
         Owner owner = new Owner(2, "Alice", "Wonder",
                 28, FamilyStatus.SINGLE,
                 false, "alicewonder@gmail.com",
                 "+111111111", LocalDate.of(1997, 1, 1),
-                new BigDecimal("0"), List.of(HOUSE_2));
+                new BigDecimal("0"), List.of(SECOND_HOUSE));
 
         EmailEventDto expectedEvent = new EmailEventDto(
                 debtor.getEmail(),
@@ -190,13 +203,13 @@ public class DebtorNotificationServiceIntegrationTests extends AbstractServiceTe
 
         debtorNotificationService.notifyAllDebtors();
 
-        String body = (String) rabbitTemplate.receiveAndConvert(EMAIL_TOPIC);
-        String body2 = (String) rabbitTemplate.receiveAndConvert(EMAIL_TOPIC);
+        String firstBody = (String) rabbitTemplate.receiveAndConvert(EMAIL_TOPIC);
+        String secondBody = (String) rabbitTemplate.receiveAndConvert(EMAIL_TOPIC);
 
-        assertTrue(Objects.nonNull(body));
-        assertNull(body2);
+        assertTrue(Objects.nonNull(firstBody));
+        assertNull(secondBody);
 
-        EmailEventDto receivedEvent = mapper.readValue(body, EmailEventDto.class);
+        EmailEventDto receivedEvent = mapper.readValue(firstBody, EmailEventDto.class);
 
         assertEquals(expectedEvent, receivedEvent);
     }
@@ -236,7 +249,7 @@ public class DebtorNotificationServiceIntegrationTests extends AbstractServiceTe
                 false, "frankjohn@gmail.com",
                 "+456987123",
                 LocalDate.of(1994, 5, 9),
-                new BigDecimal("10000"), List.of(HOUSE_1));
+                new BigDecimal("10000"), List.of(FIRST_HOUSE));
 
 
         EmailEventDto expectedEvent = new EmailEventDto(
@@ -254,7 +267,6 @@ public class DebtorNotificationServiceIntegrationTests extends AbstractServiceTe
         debtorNotificationService.notifyDebtorById(debtor.getId());
 
         String body = (String) rabbitTemplate.receiveAndConvert(EMAIL_TOPIC);
-
         assertTrue(Objects.nonNull(body));
 
         EmailEventDto receivedEvent = mapper.readValue(body, EmailEventDto.class);
@@ -274,7 +286,7 @@ public class DebtorNotificationServiceIntegrationTests extends AbstractServiceTe
                 false, "frankjohn@gmail.com",
                 "+456987123",
                 LocalDate.of(1994, 5, 9),
-                new BigDecimal("0"), List.of(HOUSE_1));
+                new BigDecimal("0"), List.of(FIRST_HOUSE));
 
         ownerTestRepository.save(debtor);
 

@@ -11,9 +11,10 @@ import com.tvo.propertyregister.model.property.PropertyCondition;
 import com.tvo.propertyregister.model.property.PropertyType;
 import com.tvo.propertyregister.service.OwnerService;
 import com.tvo.propertyregister.service.PropertyService;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -28,22 +29,22 @@ public class PropertyServiceIntegrationTests extends AbstractServiceTest {
     private PropertyService propertyService;
 
     @Autowired
-    private PropertyTestRepository propertyTestRepository;
-
-    @Autowired
     private OwnerService ownerService;
 
     @Autowired
-    private OwnerTestRepository ownerRepository;
+    private PropertyTestRepository propertyTestRepository;
 
-    private static final Property PROPERTY_1 = new Property(
+    @Autowired
+    private OwnerTestRepository ownerTestRepository;
+
+    private static final Property FIRST_PROPERTY = new Property(
             1, PropertyType.FLAT, "Prague", "Heroev Street 24",
             70, 3, new BigDecimal("500000"),
             LocalDate.of(2020, 4, 10),
             LocalDate.of(2012, 1, 9),
             PropertyCondition.GOOD);
 
-    private static final Property PROPERTY_2 = new Property(2, PropertyType.HOUSE, "Prague", "Boris Niemcov Street 220",
+    private static final Property SECOND_PROPERTY = new Property(2, PropertyType.HOUSE, "Prague", "Boris Niemcov Street 220",
             150, 5, new BigDecimal("750000"),
             LocalDate.of(2020, 4, 10),
             LocalDate.of(2012, 1, 9),
@@ -54,24 +55,40 @@ public class PropertyServiceIntegrationTests extends AbstractServiceTest {
             true, "lindajohnson@gmail.com",
             "+123456789",
             LocalDate.of(1986, 8, 9),
-            new BigDecimal("0"), List.of(PROPERTY_1));
+            new BigDecimal("0"), List.of(FIRST_PROPERTY));
 
     private static final int INVALID_ID = -1;
 
-    @BeforeEach
+    @DynamicPropertySource
+    static void setProperties(DynamicPropertyRegistry registry) {
+        registry.add("spring.data.mongodb.host", MONGO_DB_CONTAINER::getHost);
+        registry.add("spring.data.mongodb.port", MONGO_DB_CONTAINER::getFirstMappedPort);
+    }
+
+    @BeforeAll
+    public static void startContainer() {
+        MONGO_DB_CONTAINER.start();
+    }
+
+    @AfterAll
+    public static void stopContainer() {
+        MONGO_DB_CONTAINER.stop();
+    }
+
+    @AfterEach
     void cleanUp() {
         propertyTestRepository.clear();
-        ownerRepository.clear();
+        ownerTestRepository.clear();
     }
 
     @Test
     void should_get_all_properties_by_owner_id() {
         ownerService.addNewOwner(OWNER);
-        propertyService.save(OWNER.getId(), PROPERTY_2);
+        propertyService.save(OWNER.getId(), SECOND_PROPERTY);
 
         List<Property> actualProperties = propertyService.getAll(OWNER.getId());
 
-        assertEquals(List.of(PROPERTY_1, PROPERTY_2), actualProperties);
+        assertEquals(List.of(FIRST_PROPERTY, SECOND_PROPERTY), actualProperties);
     }
 
     @Test
@@ -98,13 +115,13 @@ public class PropertyServiceIntegrationTests extends AbstractServiceTest {
     void should_add_new_property_to_certain_owner() {
         ownerService.addNewOwner(OWNER);
 
-        boolean result = propertyService.save(OWNER.getId(), PROPERTY_2);
+        boolean result = propertyService.save(OWNER.getId(), SECOND_PROPERTY);
         assertTrue(result);
     }
 
     @Test
     void should_not_add_new_property_if_id_is_wrong() {
-        assertThrows(NoSuchOwnerException.class, () -> propertyService.save(INVALID_ID, PROPERTY_2));
+        assertThrows(NoSuchOwnerException.class, () -> propertyService.save(INVALID_ID, SECOND_PROPERTY));
     }
 
     @Test
@@ -125,37 +142,37 @@ public class PropertyServiceIntegrationTests extends AbstractServiceTest {
 
         int ownerId = owner.getId();
 
-        propertyService.save(ownerId, PROPERTY_1);
-        propertyService.save(ownerId, PROPERTY_2);
+        propertyService.save(ownerId, FIRST_PROPERTY);
+        propertyService.save(ownerId, SECOND_PROPERTY);
 
-        PROPERTY_2.setCity("Kyiv");
-        PROPERTY_2.setAddress("K-street");
-        PROPERTY_2.setNumberOfRooms(4);
+        SECOND_PROPERTY.setCity("Kyiv");
+        SECOND_PROPERTY.setAddress("K-street");
+        SECOND_PROPERTY.setNumberOfRooms(4);
 
-        propertyService.update(ownerId, PROPERTY_2.getId(), PROPERTY_2);
+        propertyService.update(ownerId, SECOND_PROPERTY.getId(), SECOND_PROPERTY);
 
         List<Property> ownerProperties = propertyService.getAll(ownerId);
         ownerProperties.forEach(System.out::println);
 
-        assertEquals(List.of(PROPERTY_1, PROPERTY_2), ownerProperties);
+        assertEquals(List.of(FIRST_PROPERTY, SECOND_PROPERTY), ownerProperties);
     }
 
 
     @Test
     void should_not_update_property_for_certain_owner_if_owner_id_is_wrong() {
-        assertThrows(NoSuchOwnerException.class, () -> propertyService.update(INVALID_ID, PROPERTY_2.getId(), PROPERTY_2));
+        assertThrows(NoSuchOwnerException.class, () -> propertyService.update(INVALID_ID, SECOND_PROPERTY.getId(), SECOND_PROPERTY));
     }
 
     @Test
     void should_not_update_property_for_certain_owner_if_property_id_is_wrong() {
         ownerService.addNewOwner(OWNER);
 
-        assertThrows(PropertyNotFoundException.class, () -> propertyService.update(OWNER.getId(), INVALID_ID, PROPERTY_1));
+        assertThrows(PropertyNotFoundException.class, () -> propertyService.update(OWNER.getId(), INVALID_ID, FIRST_PROPERTY));
     }
 
     @Test
     void should_not_update_property_for_certain_owner_if_property_is_null() {
-        assertThrows(PropertyNotFoundException.class, () -> propertyService.update(1, PROPERTY_2.getId(), null));
+        assertThrows(PropertyNotFoundException.class, () -> propertyService.update(1, SECOND_PROPERTY.getId(), null));
     }
 
     @Test
@@ -168,10 +185,10 @@ public class PropertyServiceIntegrationTests extends AbstractServiceTest {
     @Test
     void should_remove_property_for_certain_owner() {
         ownerService.addNewOwner(OWNER);
-        boolean isAdded = propertyService.save(OWNER.getId(), PROPERTY_2);
+        boolean isAdded = propertyService.save(OWNER.getId(), SECOND_PROPERTY);
         assertTrue(isAdded);
 
-        boolean isRemoved = propertyService.remove(OWNER.getId(), PROPERTY_2.getId());
+        boolean isRemoved = propertyService.remove(OWNER.getId(), SECOND_PROPERTY.getId());
         assertTrue(isRemoved);
     }
 
