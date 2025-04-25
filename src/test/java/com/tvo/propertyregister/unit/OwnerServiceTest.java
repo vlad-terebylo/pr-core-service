@@ -173,6 +173,8 @@ public class OwnerServiceTest {
 
     @Test
     public void should_update_owner_info() {
+        when(ownerRepository.findById(OWNER.getId())).thenReturn(OWNER);
+
         ownerService.updateInfo(OWNER.getId(), OWNER);
 
         verify(ownerRepository, times(1)).update(OWNER.getId(), OWNER);
@@ -181,11 +183,15 @@ public class OwnerServiceTest {
     @Test
     public void should_not_update_non_existing_owner() {
         int wrongId = -1;
-        when(ownerRepository.update(wrongId, OWNER)).thenThrow(UpdateOwnerFailedException.class);
+        when(ownerRepository.findById(wrongId)).thenReturn(null);
 
-        assertThrows(UpdateOwnerFailedException.class, () -> ownerService.updateInfo(wrongId, OWNER));
+        assertThrows(NoSuchOwnerException.class, () -> ownerService.updateInfo(wrongId, OWNER));
     }
 
+    @Test
+    public void should_not_update_owner_when_argument_is_null() {
+        assertThrows(UpdateOwnerFailedException.class, () -> ownerService.updateInfo(OWNER.getId(), null));
+    }
 
     @Test
     public void should_delete_owner() {
@@ -215,7 +221,7 @@ public class OwnerServiceTest {
                 TAX_RATE_HOUSE,
                 TAX_RATE_OFFICE));
 
-        when(ownerService.getOwnerById(OWNER.getId())).thenReturn(OWNER);
+        when(ownerRepository.findById(OWNER.getId())).thenReturn(OWNER);
 
         BigDecimal baseTaxResult = ownerService.countTaxObligation(OWNER.getId());
 
@@ -234,7 +240,7 @@ public class OwnerServiceTest {
                 TAX_RATE_HOUSE,
                 TAX_RATE_OFFICE));
 
-        when(ownerService.getOwnerById(DEBTOR.getId())).thenReturn(DEBTOR);
+        when(ownerRepository.findById(DEBTOR.getId())).thenReturn(DEBTOR);
 
         BigDecimal baseTaxResult = ownerService.countTaxObligation(DEBTOR.getId());
 
@@ -252,7 +258,7 @@ public class OwnerServiceTest {
                 TAX_RATE_OFFICE
         ));
 
-        when(ownerService.getOwnerById(OWNER_2.getId())).thenReturn(OWNER_2);
+        when(ownerRepository.findById(OWNER_2.getId())).thenReturn(OWNER_2);
 
         BigDecimal taxObligationResult = ownerService.countTaxObligation(OWNER_2.getId());
 
