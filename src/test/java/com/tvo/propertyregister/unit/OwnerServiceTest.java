@@ -189,7 +189,7 @@ public class OwnerServiceTest {
     }
 
     @Test
-    public void should_not_update_owner_when_argument_is_null() {
+    public void should_not_update_owner_when_owner_to_update_is_null() {
         assertThrows(UpdateOwnerFailedException.class, () -> ownerService.updateInfo(OWNER.getId(), null));
     }
 

@@ -120,6 +120,47 @@ public class PropertyServiceIntegrationTests extends AbstractServiceTest {
     }
 
     @Test
+    void should_initialize_list_of_properties_if_it_is_null() {
+        Owner owner = new Owner(1, "Frank", "John",
+                30, FamilyStatus.SINGLE,
+                false, "frankjohn@gmail.com",
+                "+456987123",
+                LocalDate.of(1994, 5, 9),
+                new BigDecimal("10000"), null);
+
+        boolean isOwnerAdded = ownerService.addNewOwner(owner);
+        assertTrue(isOwnerAdded);
+
+        boolean isPropertyAdded = propertyService.save(owner.getId(), FIRST_PROPERTY);
+        assertTrue(isPropertyAdded);
+
+        Owner actualOwner = ownerService.getOwnerById(owner.getId());
+        assertNotNull(actualOwner.getProperties());
+    }
+
+    @Test
+    void should_not_initialize_list_of_properties_if_it_is_not_null() {
+        List<Property> initialProperties = new ArrayList<>();
+        Owner owner = new Owner(2, "Lisa", "Brown",
+                28, FamilyStatus.MARRIED,
+                false, "lisabrown@gmail.com",
+                "+123456789",
+                LocalDate.of(1995, 3, 14),
+                new BigDecimal("15000"), initialProperties);
+
+        boolean isOwnerAdded = ownerService.addNewOwner(owner);
+        assertTrue(isOwnerAdded);
+
+        boolean isPropertyAdded = propertyService.save(owner.getId(), FIRST_PROPERTY);
+        assertTrue(isPropertyAdded);
+
+        Owner actualOwner = ownerService.getOwnerById(owner.getId());
+
+        assertEquals(1, actualOwner.getProperties().size());
+        assertEquals(FIRST_PROPERTY, actualOwner.getProperties().get(0));
+    }
+
+    @Test
     void should_not_add_new_property_if_id_is_wrong() {
         assertThrows(NoSuchOwnerException.class, () -> propertyService.save(INVALID_ID, SECOND_PROPERTY));
     }

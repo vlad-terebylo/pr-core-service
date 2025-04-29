@@ -280,6 +280,11 @@ public class DebtorNotificationServiceIntegrationTests extends AbstractServiceTe
     }
 
     @Test
+    void should_not_send_notification_to_certain_debtor_if_id_is_null(){
+        assertThrows(NoSuchOwnerException.class, () -> debtorNotificationService.notifyDebtorById(-1));
+    }
+
+    @Test
     void should_not_send_notification_to_certain_debtor_by_id_if_the_owner_debt_is_zero() {
         Owner debtor = new Owner(1, "Frank", "John",
                 30, FamilyStatus.SINGLE,

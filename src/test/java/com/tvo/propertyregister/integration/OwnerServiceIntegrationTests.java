@@ -1,6 +1,8 @@
 package com.tvo.propertyregister.integration;
 
+import com.tvo.propertyregister.exception.InvalidTaxRateNumberException;
 import com.tvo.propertyregister.exception.NoSuchOwnerException;
+import com.tvo.propertyregister.exception.PropertyNotFoundException;
 import com.tvo.propertyregister.exception.UpdateOwnerFailedException;
 import com.tvo.propertyregister.integration.config.repository.OwnerTestRepository;
 import com.tvo.propertyregister.integration.config.repository.TaxRateTestRepository;
@@ -269,6 +271,11 @@ public class OwnerServiceIntegrationTests extends AbstractServiceTest {
     }
 
     @Test
+    void should_not_save_new_owner_if_owner_is_null(){
+        assertThrows(NoSuchOwnerException.class, () -> ownerService.addNewOwner(null));
+    }
+
+    @Test
     void should_update_owner_info() {
         int id = 1;
         Owner owner = new Owner(id, "John", "Smith",
@@ -387,5 +394,46 @@ public class OwnerServiceIntegrationTests extends AbstractServiceTest {
         BigDecimal realTaxObligation = ownerService.countTaxObligation(id);
 
         assertEquals(expectedTaxObligation, realTaxObligation);
+    }
+
+    @Test
+    void should_not_count_tax_obligations_if_owner_is_null(){
+        assertThrows(NoSuchOwnerException.class, () -> ownerService.countTaxObligation(INVALID_ID));
+    }
+
+    @Test
+    void should_throw_exception_if_property_is_null(){
+        int id = 1;
+
+        Owner owner = new Owner(id, "John", "Smith",
+                30, FamilyStatus.SINGLE,
+                true, "johnsmith@gmail.com",
+                "+456987123",
+                LocalDate.of(1994, 8, 9),
+                new BigDecimal("0"), null);
+        ownerService.addNewOwner(owner);
+
+        assertThrows(PropertyNotFoundException.class, () -> ownerService.countTaxObligation(id));
+    }
+
+    @Test
+    void should_throw_exception_if_tax_rate_number_is_invalid(){
+        int id = 1;
+
+        Owner owner = new Owner(id, "John", "Smith",
+                30, FamilyStatus.SINGLE,
+                true, "johnsmith@gmail.com",
+                "+456987123",
+                LocalDate.of(1994, 8, 9),
+                new BigDecimal("0"), List.of(FLAT));
+        ownerService.addNewOwner(owner);
+
+        TaxRate flatTax = new TaxRate(4, PropertyType.FLAT, new BigDecimal("5.0"));
+        TaxRate houseTax = new TaxRate(5, PropertyType.HOUSE, new BigDecimal("7.0"));
+
+        taxRateTestRepository.insertTaxRate(flatTax);
+        taxRateTestRepository.insertTaxRate(houseTax);
+
+        assertThrows(InvalidTaxRateNumberException.class, () -> ownerService.countTaxObligation(id));
     }
 }
