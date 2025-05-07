@@ -7,6 +7,7 @@ import com.tvo.propertyregister.exception.UpdateOwnerFailedException;
 import com.tvo.propertyregister.integration.config.repository.OwnerTestRepository;
 import com.tvo.propertyregister.integration.config.repository.TaxRateTestRepository;
 import com.tvo.propertyregister.model.TaxRate;
+import com.tvo.propertyregister.model.dto.ErrorDto;
 import com.tvo.propertyregister.model.owner.FamilyStatus;
 import com.tvo.propertyregister.model.owner.Owner;
 import com.tvo.propertyregister.model.property.Property;
@@ -15,13 +16,20 @@ import com.tvo.propertyregister.model.property.PropertyType;
 import com.tvo.propertyregister.service.OwnerService;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.testcontainers.shaded.org.bouncycastle.oer.its.ieee1609dot2.basetypes.LaId;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
+import static java.util.Objects.requireNonNull;
 import static org.junit.jupiter.api.Assertions.*;
 
 
@@ -35,6 +43,9 @@ public class OwnerServiceIntegrationTests extends AbstractServiceTest {
 
     @Autowired
     private TaxRateTestRepository taxRateTestRepository;
+
+    @Autowired
+    private TestRestTemplate restTemplate;
 
     private static final int INVALID_ID = -1;
 
@@ -112,45 +123,98 @@ public class OwnerServiceIntegrationTests extends AbstractServiceTest {
 
     @Test
     void should_return_all_owners_when_the_list_is_empty() {
-        List<Owner> result = ownerService.getAllOwners();
-        assertEquals(List.of(), result);
+        ResponseEntity<List<Owner>> response = restTemplate.exchange(
+                "/v1/owners",
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<>() {
+                });
+
+        List<Owner> actualOwners = requireNonNull(response.getBody());
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(List.of(), actualOwners);
     }
 
     @Test
     void should_return_all_owners_when_the_list_is_not_empty() {
         ownerService.addNewOwner(SINGLE_OWNER_WITHOUT_CHILDREN);
 
-        List<Owner> result = ownerService.getAllOwners();
-        assertEquals(List.of(SINGLE_OWNER_WITHOUT_CHILDREN), result);
+        ResponseEntity<List<Owner>> response = restTemplate.exchange(
+                "/v1/owners",
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<>() {
+                });
+
+        List<Owner> actualOwners = requireNonNull(response.getBody());
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(List.of(SINGLE_OWNER_WITHOUT_CHILDREN), actualOwners);
     }
 
     @Test
     void should_return_owner_by_id() {
         ownerService.addNewOwner(SINGLE_OWNER_WITHOUT_CHILDREN);
-        Owner createdOwner = ownerService.getOwnerById(SINGLE_OWNER_WITHOUT_CHILDREN.getId());
 
-        assertEquals(SINGLE_OWNER_WITHOUT_CHILDREN, createdOwner);
+        ResponseEntity<Owner> response = restTemplate.exchange(
+                "/v1/owners/" + SINGLE_OWNER_WITHOUT_CHILDREN.getId(),
+                HttpMethod.GET,
+                null,
+                Owner.class
+        );
+
+        Owner owner = requireNonNull(response.getBody());
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(SINGLE_OWNER_WITHOUT_CHILDREN, owner);
     }
 
     @Test
     void should_return_owner_by_id_if_id_is_wrong() {
-        assertThrows(NoSuchOwnerException.class, () -> ownerService.getOwnerById(INVALID_ID));
+        ResponseEntity<ErrorDto> response = restTemplate.exchange(
+                "/v1/owners/" + INVALID_ID,
+                HttpMethod.GET,
+                null,
+                ErrorDto.class
+        );
+
+        ErrorDto errorDto = requireNonNull(response.getBody());
+
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        assertTrue(errorDto.detail().contains("The owner with id"));
     }
 
     @Test
     void should_return_all_debtors_when_the_list_is_not_empty_but_no_debtors() {
         ownerService.addNewOwner(SINGLE_OWNER_WITHOUT_CHILDREN);
 
-        List<Owner> result = ownerService.findDebtors();
+        ResponseEntity<List<Owner>> response = restTemplate.exchange(
+                "/v1/owners/debtors",
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<>() {
+                });
 
-        assertEquals(List.of(), result);
+        List<Owner> actualDebtors = requireNonNull(response.getBody());
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(List.of(), actualDebtors);
     }
 
     @Test
     void should_return_all_debtors_when_the_list_is_empty() {
-        List<Owner> result = ownerService.findDebtors();
+        ResponseEntity<List<Owner>> response = restTemplate.exchange(
+                "/v1/owners/debtors",
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<>() {
+                });
 
-        assertEquals(List.of(), result);
+        List<Owner> actualDebtors = requireNonNull(response.getBody());
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(List.of(), actualDebtors);
     }
 
     @Test
@@ -158,9 +222,17 @@ public class OwnerServiceIntegrationTests extends AbstractServiceTest {
         ownerService.addNewOwner(SINGLE_OWNER_WITHOUT_CHILDREN);
         ownerService.addNewOwner(DEBTOR);
 
-        List<Owner> result = ownerService.findDebtors();
+        ResponseEntity<List<Owner>> response = restTemplate.exchange(
+                "/v1/owners/debtors",
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<>() {
+                });
 
-        assertEquals(List.of(DEBTOR), result);
+        List<Owner> debtors = requireNonNull(response.getBody());
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(List.of(DEBTOR), debtors);
     }
 
     @Test
@@ -271,7 +343,7 @@ public class OwnerServiceIntegrationTests extends AbstractServiceTest {
     }
 
     @Test
-    void should_not_save_new_owner_if_owner_is_null(){
+    void should_not_save_new_owner_if_owner_is_null() {
         assertThrows(NoSuchOwnerException.class, () -> ownerService.addNewOwner(null));
     }
 
@@ -397,12 +469,12 @@ public class OwnerServiceIntegrationTests extends AbstractServiceTest {
     }
 
     @Test
-    void should_not_count_tax_obligations_if_owner_is_null(){
+    void should_not_count_tax_obligations_if_owner_is_null() {
         assertThrows(NoSuchOwnerException.class, () -> ownerService.countTaxObligation(INVALID_ID));
     }
 
     @Test
-    void should_throw_exception_if_property_is_null(){
+    void should_throw_property_not_found_exception_if_property_is_null() {
         int id = 1;
 
         Owner owner = new Owner(id, "John", "Smith",
@@ -417,7 +489,7 @@ public class OwnerServiceIntegrationTests extends AbstractServiceTest {
     }
 
     @Test
-    void should_throw_exception_if_tax_rate_number_is_invalid(){
+    void should_throw_exception_if_tax_rate_number_is_invalid() {
         int id = 1;
 
         Owner owner = new Owner(id, "John", "Smith",

@@ -1,5 +1,6 @@
 package com.tvo.propertyregister.integration.config;
 
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.tvo.propertyregister.integration.config.repository.OwnerTestRepository;
@@ -10,9 +11,10 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 
 @TestConfiguration
-public class TestMongoConfig {
+public class TestConfig {
     @Value("${spring.data.mongodb.host}")
     private String mongoHost;
 
@@ -26,17 +28,22 @@ public class TestMongoConfig {
     }
 
     @Bean
-    public OwnerTestRepository ownerTestRepository(MongoTemplate mongoTemplate){
+    public OwnerTestRepository ownerTestRepository(MongoTemplate mongoTemplate) {
         return new OwnerTestRepository(mongoTemplate);
     }
 
     @Bean
-    public PropertyTestRepository propertyTestRepository(MongoTemplate mongoTemplate){
+    public PropertyTestRepository propertyTestRepository(MongoTemplate mongoTemplate) {
         return new PropertyTestRepository(mongoTemplate);
     }
 
     @Bean
-    public TaxRateTestRepository taxRatesTestRepository(MongoTemplate mongoTemplate){
+    public TaxRateTestRepository taxRatesTestRepository(MongoTemplate mongoTemplate) {
         return new TaxRateTestRepository(mongoTemplate);
+    }
+
+    @Bean
+    public RestTemplateBuilder testRestTemplate() {
+        return new RestTemplateBuilder().requestFactory(() -> new HttpComponentsClientHttpRequestFactory());
     }
 }

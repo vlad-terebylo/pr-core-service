@@ -51,9 +51,7 @@ public class DebtorNotificationService {
 
     public boolean notifyDebtorById(int id) {
         Owner debtor = this.ownerService.getOwnerById(id);
-        if(Objects.isNull(debtor)){
-            throw new NoSuchOwnerException("The owner with id " + id + " does not exists");
-        }
+
         if (debtor.getTaxesDebt().compareTo(new BigDecimal("0")) <= 0) {
             throw new DontHaveTaxDebtsException("Does not exists or his tax debt is lower or equals zero!");
         }

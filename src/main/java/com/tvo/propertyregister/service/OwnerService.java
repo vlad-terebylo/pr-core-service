@@ -37,7 +37,7 @@ public class OwnerService {
             throw new NoSuchOwnerException("The owner with id " + id + " was not found");
         }
 
-        return this.ownerRepository.findById(id);
+        return owner;
     }
 
     public List<Owner> findDebtors() {
