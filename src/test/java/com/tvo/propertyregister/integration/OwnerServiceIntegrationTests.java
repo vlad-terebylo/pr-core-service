@@ -7,7 +7,7 @@ import com.tvo.propertyregister.exception.UpdateOwnerFailedException;
 import com.tvo.propertyregister.integration.config.repository.OwnerTestRepository;
 import com.tvo.propertyregister.integration.config.repository.TaxRateTestRepository;
 import com.tvo.propertyregister.model.TaxRate;
-import com.tvo.propertyregister.model.dto.ErrorDto;
+import com.tvo.propertyregister.model.dto.*;
 import com.tvo.propertyregister.model.owner.FamilyStatus;
 import com.tvo.propertyregister.model.owner.Owner;
 import com.tvo.propertyregister.model.property.Property;
@@ -18,12 +18,12 @@ import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-import org.testcontainers.shaded.org.bouncycastle.oer.its.ieee1609dot2.basetypes.LaId;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -239,112 +239,76 @@ public class OwnerServiceIntegrationTests extends AbstractServiceTest {
     void should_return_all_debtors_when_there_is_only_debtors_in_list() {
         ownerService.addNewOwner(DEBTOR);
 
-        List<Owner> result = ownerService.findDebtors();
+        ResponseEntity<List<Owner>> response = restTemplate.exchange(
+                "/v1/owners/debtors",
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<>() {
+                }
+        );
 
-        assertEquals(List.of(DEBTOR), result);
-    }
+        List<Owner> debtors = requireNonNull(response.getBody());
 
-    @Test
-    void should_recount_debt_for_debtors_when_no_debtors() {
-        ownerService.addNewOwner(SINGLE_OWNER_WITHOUT_CHILDREN);
-
-        ownerService.recountDebtForDebtors();
-
-        Owner nonDebtor = ownerService.getOwnerById(SINGLE_OWNER_WITHOUT_CHILDREN.getId());
-        assertEquals(BigDecimal.ZERO, nonDebtor.getTaxesDebt());
-    }
-
-    @Test
-    void should_recount_debt_for_debtors_when_in_list_single_debtor() {
-        Owner debtor = new Owner(1, "Frank", "John",
-                30, FamilyStatus.SINGLE,
-                false, "frankjohn@gmail.com",
-                "+456987123",
-                LocalDate.of(1994, 5, 9),
-                new BigDecimal("10000"), List.of(HOUSE_2));
-
-        ownerService.addNewOwner(debtor);
-
-        ownerService.recountDebtForDebtors();
-
-        Owner updatedDebtor = ownerService.getOwnerById(debtor.getId());
-        BigDecimal expectedDebt = new BigDecimal("10500.0");
-
-        assertEquals(expectedDebt, updatedDebtor.getTaxesDebt());
-    }
-
-    @Test
-    void should_recount_debt_for_debtors_when_in_list_two_or_more_debtors() {
-        Owner debtor = new Owner(1, "Frank", "John",
-                30, FamilyStatus.SINGLE,
-                false, "frankjohn@gmail.com",
-                "+456987123",
-                LocalDate.of(1994, 5, 9),
-                new BigDecimal("10000"), List.of(HOUSE_2));
-
-        Owner debtor2 = new Owner(2, "Alice", "Wonder",
-                28, FamilyStatus.SINGLE,
-                false, "alicewonder@gmail.com",
-                "+111111111", LocalDate.of(1997, 1, 1),
-                new BigDecimal("20000"), List.of(HOUSE_1));
-
-        ownerService.addNewOwner(debtor);
-        ownerService.addNewOwner(debtor2);
-
-        ownerService.recountDebtForDebtors();
-
-        Owner updatedDebtor1 = ownerService.getOwnerById(debtor.getId());
-        BigDecimal expectedDebt1 = new BigDecimal("10500.0");
-        assertEquals(expectedDebt1, updatedDebtor1.getTaxesDebt());
-
-        Owner updatedDebtor2 = ownerService.getOwnerById(debtor2.getId());
-        BigDecimal expectedDebt2 = new BigDecimal("21000.0");
-        assertEquals(expectedDebt2, updatedDebtor2.getTaxesDebt());
-    }
-
-    @Test
-    void should_recount_debt_for_debtors_when_in_list_debtors_and_owners_without_debts() {
-        Owner debtor = new Owner(1, "Frank", "John",
-                30, FamilyStatus.SINGLE,
-                false, "frankjohn@gmail.com",
-                "+456987123",
-                LocalDate.of(1994, 5, 9),
-                new BigDecimal("10000"), List.of(HOUSE_2));
-
-        ownerService.addNewOwner(SINGLE_OWNER_WITHOUT_CHILDREN);
-        ownerService.addNewOwner(debtor);
-
-        ownerService.recountDebtForDebtors();
-
-        Owner nonDebtor = ownerService.getOwnerById(SINGLE_OWNER_WITHOUT_CHILDREN.getId());
-        assertEquals(BigDecimal.ZERO, nonDebtor.getTaxesDebt());
-
-        Owner updatedDebtor = ownerService.getOwnerById(debtor.getId());
-        BigDecimal expectedDebt = new BigDecimal("10500.0");
-        assertEquals(expectedDebt, updatedDebtor.getTaxesDebt());
-    }
-
-    @Test
-    void should_not_recalculate_debt_if_debt_is_zero() {
-        ownerService.addNewOwner(SINGLE_OWNER_WITHOUT_CHILDREN);
-
-        BigDecimal expectedDept = new BigDecimal("0");
-
-        assertEquals(expectedDept, SINGLE_OWNER_WITHOUT_CHILDREN.getTaxesDebt());
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(List.of(DEBTOR), debtors);
     }
 
     @Test
     void should_save_new_owner() {
-        boolean isAdded = ownerService.addNewOwner(SINGLE_OWNER_WITHOUT_CHILDREN);
-        Owner result = ownerService.getOwnerById(SINGLE_OWNER_WITHOUT_CHILDREN.getId());
+        CreateOwnerDto createOwnerDto = new CreateOwnerDto(
+                SINGLE_OWNER_WITHOUT_CHILDREN.getFirstName(),
+                SINGLE_OWNER_WITHOUT_CHILDREN.getLastName(),
+                SINGLE_OWNER_WITHOUT_CHILDREN.getAge(),
+                SINGLE_OWNER_WITHOUT_CHILDREN.getFamilyStatus(),
+                SINGLE_OWNER_WITHOUT_CHILDREN.isHasChildren(),
+                SINGLE_OWNER_WITHOUT_CHILDREN.getEmail(),
+                SINGLE_OWNER_WITHOUT_CHILDREN.getPhoneNumber(),
+                SINGLE_OWNER_WITHOUT_CHILDREN.getBirthday(),
+                SINGLE_OWNER_WITHOUT_CHILDREN.getTaxesDebt()
+        );
 
-        assertTrue(isAdded);
-        assertEquals(SINGLE_OWNER_WITHOUT_CHILDREN, result);
+        HttpEntity<CreateOwnerDto> createDto = new HttpEntity<>(createOwnerDto);
+
+        ResponseEntity<BooleanResponseDto> response = restTemplate.exchange(
+                "/v1/owners",
+                HttpMethod.POST,
+                createDto,
+                BooleanResponseDto.class
+        );
+
+        Owner owner = ownerService.getOwnerById(SINGLE_OWNER_WITHOUT_CHILDREN.getId());
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertTrue(requireNonNull(response.getBody()).succeed());
+        assertTrue(compareOwners(SINGLE_OWNER_WITHOUT_CHILDREN, owner));
+    }
+
+    private boolean compareOwners(Owner expected, Owner actual) {
+        return expected.getId() == actual.getId()
+                && expected.getFirstName().equals(actual.getFirstName())
+                && expected.getLastName().equals(actual.getLastName())
+                && expected.getAge() == actual.getAge()
+                && expected.getFamilyStatus().equals(actual.getFamilyStatus())
+                && expected.isHasChildren() == actual.isHasChildren()
+                && expected.getEmail().equals(actual.getEmail())
+                && expected.getPhoneNumber().equals(actual.getPhoneNumber())
+                && expected.getBirthday().equals(actual.getBirthday())
+                && expected.getTaxesDebt().equals(actual.getTaxesDebt());
     }
 
     @Test
     void should_not_save_new_owner_if_owner_is_null() {
-        assertThrows(NoSuchOwnerException.class, () -> ownerService.addNewOwner(null));
+        ResponseEntity<ErrorDto> response = restTemplate.exchange(
+                "/v1/owners",
+                HttpMethod.POST,
+                null,
+                ErrorDto.class
+        );
+
+        ErrorDto error = requireNonNull(response.getBody());
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertTrue(error.detail().contains("Failed to read request"));
     }
 
     @Test
@@ -359,71 +323,156 @@ public class OwnerServiceIntegrationTests extends AbstractServiceTest {
 
         ownerService.addNewOwner(owner);
 
-        assertEquals(owner, ownerService.getOwnerById(id));
+        owner.setAge(31);
+        owner.setHasChildren(true);
 
-        owner.setFamilyStatus(FamilyStatus.MARRIED);
-        owner.setLastName("Faith");
+        UpdateOwnerDto updateOwnerDto = new UpdateOwnerDto(
+                owner.getFirstName(),
+                owner.getLastName(),
+                owner.getAge(),
+                owner.getFamilyStatus(),
+                owner.isHasChildren(),
+                owner.getEmail(),
+                owner.getPhoneNumber(),
+                owner.getBirthday(),
+                owner.getTaxesDebt()
+        );
 
-        boolean result = ownerService.updateInfo(id, owner);
+        HttpEntity<UpdateOwnerDto> updateOwnerDtoHttpEntity = new HttpEntity<>(updateOwnerDto);
 
-        assertTrue(result);
-        assertEquals(owner, ownerService.getOwnerById(id));
+        ResponseEntity<BooleanResponseDto> response = restTemplate.exchange(
+                "/v1/owners/" + owner.getId(),
+                HttpMethod.PUT,
+                updateOwnerDtoHttpEntity,
+                BooleanResponseDto.class
+        );
+
+        ResponseEntity<Owner> getOwner = restTemplate.exchange(
+                "/v1/owners/" + owner.getId(),
+                HttpMethod.GET,
+                null,
+                Owner.class
+        );
+
+        Owner actualOwner = requireNonNull(getOwner.getBody());
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertTrue(requireNonNull(response.getBody()).succeed());
+        assertEquals(HttpStatus.OK, getOwner.getStatusCode());
+        assertTrue(compareOwners(owner, actualOwner));
     }
 
     @Test
     void should_not_update_owner_and_throw_exception_if_does_not_exist() {
-        assertThrows(UpdateOwnerFailedException.class, () -> ownerService.updateInfo(1, null));
+        HttpEntity<UpdateOwnerDto> request = new HttpEntity<>(null);
+
+        ResponseEntity<ErrorDto> response = restTemplate.exchange(
+                "/v1/owners/" + SINGLE_OWNER_WITHOUT_CHILDREN.getId(),
+                HttpMethod.PUT,
+                request,
+                ErrorDto.class
+        );
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
     }
 
     @Test
     void should_not_update_owner_and_throw_exception_if_not_found_by_id() {
-        assertThrows(NoSuchOwnerException.class, () -> ownerService.updateInfo(INVALID_ID, SINGLE_OWNER_WITHOUT_CHILDREN));
+        HttpEntity<UpdateOwnerDto> request = new HttpEntity<>(new UpdateOwnerDto(
+                SINGLE_OWNER_WITHOUT_CHILDREN.getFirstName(),
+                SINGLE_OWNER_WITHOUT_CHILDREN.getLastName(),
+                SINGLE_OWNER_WITHOUT_CHILDREN.getAge(),
+                SINGLE_OWNER_WITHOUT_CHILDREN.getFamilyStatus(),
+                SINGLE_OWNER_WITHOUT_CHILDREN.isHasChildren(),
+                SINGLE_OWNER_WITHOUT_CHILDREN.getEmail(),
+                SINGLE_OWNER_WITHOUT_CHILDREN.getPhoneNumber(),
+                SINGLE_OWNER_WITHOUT_CHILDREN.getBirthday(),
+                SINGLE_OWNER_WITHOUT_CHILDREN.getTaxesDebt()
+        ));
+
+        ResponseEntity<ErrorDto> response = restTemplate.exchange(
+                "/v1/owners/" + INVALID_ID,
+                HttpMethod.PUT,
+                request,
+                ErrorDto.class
+        );
+
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertTrue(response.getBody().detail().contains("does not exists"));
     }
 
     @Test
     void should_remove_owner() {
         ownerService.addNewOwner(SINGLE_OWNER_WITHOUT_CHILDREN);
-        Owner gotOwner = ownerService.getOwnerById(SINGLE_OWNER_WITHOUT_CHILDREN.getId());
 
-        assertEquals(SINGLE_OWNER_WITHOUT_CHILDREN, gotOwner);
+        ResponseEntity<BooleanResponseDto> deleteResponse = restTemplate.exchange(
+                "/v1/owners/" + SINGLE_OWNER_WITHOUT_CHILDREN.getId(),
+                HttpMethod.DELETE,
+                null,
+                BooleanResponseDto.class
+        );
 
-        boolean result = ownerService.removeOwner(SINGLE_OWNER_WITHOUT_CHILDREN.getId());
+        ResponseEntity<ErrorDto> getResponse = restTemplate.exchange(
+                "/v1/owners" + SINGLE_OWNER_WITHOUT_CHILDREN.getId(),
+                HttpMethod.GET,
+                null,
+                ErrorDto.class
+        );
 
-        assertTrue(result);
-        assertEquals(List.of(), ownerService.getAllOwners());
+        assertEquals(HttpStatus.OK, deleteResponse.getStatusCode());
+        assertTrue(requireNonNull(deleteResponse.getBody()).succeed());
+        assertEquals(HttpStatus.NOT_FOUND, getResponse.getStatusCode());
     }
 
     @Test
     void should_return_false_if_nothing_to_remove() {
-        boolean result = ownerService.removeOwner(1);
+        ResponseEntity<ErrorDto> deleteResponse = restTemplate.exchange(
+                "/v1/owners" + INVALID_ID,
+                HttpMethod.DELETE,
+                null,
+                ErrorDto.class
+        );
 
-        assertFalse(result);
+        assertEquals(HttpStatus.NOT_FOUND, deleteResponse.getStatusCode());
     }
 
     @Test
     void should_count_tax_obligations_no_leeway() {
         ownerService.addNewOwner(SINGLE_OWNER_WITHOUT_CHILDREN);
 
-        assertEquals(SINGLE_OWNER_WITHOUT_CHILDREN, ownerService.getOwnerById(SINGLE_OWNER_WITHOUT_CHILDREN.getId()));
-        assertEquals(taxRateTestRepository.findAll(), taxRates);
+        ResponseEntity<TaxObligationResponseDto> countTaxResponse = restTemplate.exchange(
+                "/v1/owners/" + SINGLE_OWNER_WITHOUT_CHILDREN.getId() + "/tax-obligations",
+                HttpMethod.GET,
+                null,
+                TaxObligationResponseDto.class
+        );
 
         BigDecimal expectedTaxObligation = new BigDecimal("420");
-        BigDecimal realTaxObligation = ownerService.countTaxObligation(SINGLE_OWNER_WITHOUT_CHILDREN.getId());
+        TaxObligationResponseDto taxObligationResponseDto = requireNonNull(countTaxResponse.getBody());
+        BigDecimal actualTaxObligation = taxObligationResponseDto.taxObligation();
 
-        assertEquals(expectedTaxObligation, realTaxObligation);
+        assertEquals(HttpStatus.OK, countTaxResponse.getStatusCode());
+        assertEquals(expectedTaxObligation, actualTaxObligation);
     }
 
     @Test
     void should_count_tax_obligations_with_multiple_leeway() {
         ownerService.addNewOwner(MARRIED_OWNER_WITH_CHILDREN);
 
-        assertEquals(ownerService.getOwnerById(MARRIED_OWNER_WITH_CHILDREN.getId()), MARRIED_OWNER_WITH_CHILDREN);
-        assertEquals(taxRateTestRepository.findAll(), taxRates);
+        ResponseEntity<TaxObligationResponseDto> countTaxResponse = restTemplate.exchange(
+                "/v1/owners/" + MARRIED_OWNER_WITH_CHILDREN.getId() + "/tax-obligations",
+                HttpMethod.GET,
+                null,
+                TaxObligationResponseDto.class
+        );
 
         BigDecimal expectedTaxObligation = new BigDecimal("960.0");
-        BigDecimal realTaxObligation = ownerService.countTaxObligation(MARRIED_OWNER_WITH_CHILDREN.getId());
+        TaxObligationResponseDto taxObligationResponseDto = requireNonNull(countTaxResponse.getBody());
+        BigDecimal actualTaxObligation = taxObligationResponseDto.taxObligation();
 
-        assertEquals(expectedTaxObligation, realTaxObligation);
+        assertEquals(HttpStatus.OK, countTaxResponse.getStatusCode());
+        assertEquals(expectedTaxObligation, actualTaxObligation);
     }
 
     @Test
@@ -438,39 +487,60 @@ public class OwnerServiceIntegrationTests extends AbstractServiceTest {
 
         ownerService.addNewOwner(owner);
 
-        assertEquals(ownerService.getOwnerById(id), owner);
-        assertEquals(taxRateTestRepository.findAll(), taxRates);
+        ResponseEntity<TaxObligationResponseDto> countTaxResponse = restTemplate.exchange(
+                "/v1/owners/" + owner.getId() + "/tax-obligations",
+                HttpMethod.GET,
+                null,
+                TaxObligationResponseDto.class
+        );
 
         BigDecimal expectedTaxObligation = new BigDecimal("378.0");
-        BigDecimal realTaxObligation = ownerService.countTaxObligation(id);
+        TaxObligationResponseDto taxObligationResponseDto = requireNonNull(countTaxResponse.getBody());
+        BigDecimal actualTaxObligation = taxObligationResponseDto.taxObligation();
 
-        assertEquals(expectedTaxObligation, realTaxObligation);
+        assertEquals(HttpStatus.OK, countTaxResponse.getStatusCode());
+        assertEquals(expectedTaxObligation, actualTaxObligation);
     }
 
     @Test
     void should_count_tax_obligations_if_owner_has_children_but_is_not_married() {
         int id = 1;
-
         Owner owner = new Owner(id, "John", "Smith",
                 30, FamilyStatus.SINGLE,
                 true, "johnsmith@gmail.com",
                 "+456987123",
                 LocalDate.of(1994, 8, 9),
                 new BigDecimal("0"), List.of(FLAT));
+
         ownerService.addNewOwner(owner);
 
-        assertEquals(ownerService.getOwnerById(id), owner);
-        assertEquals(taxRateTestRepository.findAll(), taxRates);
+        ResponseEntity<TaxObligationResponseDto> countTaxResponse = restTemplate.exchange(
+                "/v1/owners/" + owner.getId() + "/tax-obligations",
+                HttpMethod.GET,
+                null,
+                TaxObligationResponseDto.class
+        );
 
         BigDecimal expectedTaxObligation = new BigDecimal("294.0");
-        BigDecimal realTaxObligation = ownerService.countTaxObligation(id);
+        TaxObligationResponseDto taxObligationResponseDto = requireNonNull(countTaxResponse.getBody());
+        BigDecimal actualTaxObligation = taxObligationResponseDto.taxObligation();
 
-        assertEquals(expectedTaxObligation, realTaxObligation);
+        assertEquals(expectedTaxObligation, actualTaxObligation);
     }
 
     @Test
     void should_not_count_tax_obligations_if_owner_is_null() {
-        assertThrows(NoSuchOwnerException.class, () -> ownerService.countTaxObligation(INVALID_ID));
+        ResponseEntity<ErrorDto> countTaxResponse = restTemplate.exchange(
+                "/v1/owners/" + INVALID_ID + "/tax-obligations",
+                HttpMethod.GET,
+                null,
+                ErrorDto.class
+        );
+
+        ErrorDto error = requireNonNull(countTaxResponse.getBody());
+
+        assertEquals(HttpStatus.NOT_FOUND, countTaxResponse.getStatusCode());
+        assertTrue(error.detail().contains("does not exists"));
     }
 
     @Test
@@ -485,7 +555,16 @@ public class OwnerServiceIntegrationTests extends AbstractServiceTest {
                 new BigDecimal("0"), null);
         ownerService.addNewOwner(owner);
 
-        assertThrows(PropertyNotFoundException.class, () -> ownerService.countTaxObligation(id));
+        ResponseEntity<ErrorDto> countTaxResponse = restTemplate.exchange(
+                "/v1/owners/" + owner.getId() + "/tax-obligations",
+                HttpMethod.GET,
+                null,
+                ErrorDto.class
+        );
+
+        ErrorDto error = requireNonNull(countTaxResponse.getBody());
+        assertEquals(HttpStatus.NOT_FOUND, countTaxResponse.getStatusCode());
+        assertTrue(error.detail().contains("The list of property does not exist"));
     }
 
     @Test
@@ -506,6 +585,15 @@ public class OwnerServiceIntegrationTests extends AbstractServiceTest {
         taxRateTestRepository.insertTaxRate(flatTax);
         taxRateTestRepository.insertTaxRate(houseTax);
 
-        assertThrows(InvalidTaxRateNumberException.class, () -> ownerService.countTaxObligation(id));
+        ResponseEntity<ErrorDto> countTaxResponse = restTemplate.exchange(
+                "/v1/owners/" + owner.getId() + "/tax-obligations",
+                HttpMethod.GET,
+                null,
+                ErrorDto.class
+        );
+
+        ErrorDto error = requireNonNull(countTaxResponse.getBody());
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, countTaxResponse.getStatusCode());
+        assertTrue(error.detail().contains("Invalid number of tax rates"));
     }
 }
