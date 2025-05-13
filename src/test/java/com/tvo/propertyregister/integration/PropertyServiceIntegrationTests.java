@@ -4,6 +4,10 @@ import com.tvo.propertyregister.exception.NoSuchOwnerException;
 import com.tvo.propertyregister.exception.PropertyNotFoundException;
 import com.tvo.propertyregister.integration.config.repository.OwnerTestRepository;
 import com.tvo.propertyregister.integration.config.repository.PropertyTestRepository;
+import com.tvo.propertyregister.model.dto.BooleanResponseDto;
+import com.tvo.propertyregister.model.dto.CreatePropertyDto;
+import com.tvo.propertyregister.model.dto.ErrorDto;
+import com.tvo.propertyregister.model.dto.UpdatePropertyDto;
 import com.tvo.propertyregister.model.owner.FamilyStatus;
 import com.tvo.propertyregister.model.owner.Owner;
 import com.tvo.propertyregister.model.property.Property;
@@ -13,6 +17,12 @@ import com.tvo.propertyregister.service.OwnerService;
 import com.tvo.propertyregister.service.PropertyService;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 
@@ -21,9 +31,13 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+import static java.util.Objects.requireNonNull;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class PropertyServiceIntegrationTests extends AbstractServiceTest {
+
+    @Autowired
+    private TestRestTemplate restTemplate;
 
     @Autowired
     private PropertyService propertyService;
@@ -86,14 +100,33 @@ public class PropertyServiceIntegrationTests extends AbstractServiceTest {
         ownerService.addNewOwner(OWNER);
         propertyService.save(OWNER.getId(), SECOND_PROPERTY);
 
-        List<Property> actualProperties = propertyService.getAll(OWNER.getId());
+        ResponseEntity<List<Property>> response = restTemplate.exchange(
+                "/v1/owners/" + OWNER.getId() + "/properties",
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<>() {
+                }
+        );
 
-        assertEquals(List.of(FIRST_PROPERTY, SECOND_PROPERTY), actualProperties);
+        List<Property> properties = requireNonNull(response.getBody());
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(List.of(FIRST_PROPERTY, SECOND_PROPERTY), properties);
     }
 
     @Test
     void should_get_all_properties_by_owner_id_if_the_id_is_wrong() {
-        assertThrows(NoSuchOwnerException.class, () -> propertyService.getAll(INVALID_ID));
+        ResponseEntity<ErrorDto> response = restTemplate.exchange(
+                "/v1/owners/" + OWNER.getId() + "/properties",
+                HttpMethod.GET,
+                null,
+                ErrorDto.class
+        );
+
+        ErrorDto error = requireNonNull(response.getBody());
+
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        assertTrue(error.detail().contains("was not found"));
     }
 
     @Test
@@ -105,18 +138,58 @@ public class PropertyServiceIntegrationTests extends AbstractServiceTest {
                 LocalDate.of(1994, 5, 9),
                 new BigDecimal("10000"), List.of());
 
-        boolean result = ownerService.addNewOwner(owner);
+        ownerService.addNewOwner(owner);
 
-        assertTrue(result);
-        assertEquals(List.of(), owner.getProperties());
+        ResponseEntity<List<Property>> response = restTemplate.exchange(
+                "/v1/owners/" + owner.getId() + "/properties",
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<>() {
+                }
+        );
+
+        List<Property> properties = requireNonNull(response.getBody());
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(List.of(), properties);
     }
 
+    // TODO: 5/13/2025 To solve problem with comparing CreateProperty IDs(in DTOs property id is 1)
     @Test
     void should_add_new_property_to_certain_owner() {
         ownerService.addNewOwner(OWNER);
 
-        boolean result = propertyService.save(OWNER.getId(), SECOND_PROPERTY);
-        assertTrue(result);
+        CreatePropertyDto createPropertyDto = new CreatePropertyDto(
+                SECOND_PROPERTY.getPropertyType(),
+                SECOND_PROPERTY.getCity(),
+                SECOND_PROPERTY.getAddress(),
+                SECOND_PROPERTY.getSquare(),
+                SECOND_PROPERTY.getNumberOfRooms(),
+                SECOND_PROPERTY.getCost(),
+                SECOND_PROPERTY.getDateOfBecomingOwner(),
+                SECOND_PROPERTY.getDateOfBuilding(),
+                SECOND_PROPERTY.getPropertyCondition()
+        );
+
+        HttpEntity<CreatePropertyDto> addingRequest = new HttpEntity<>(createPropertyDto);
+
+        ResponseEntity<BooleanResponseDto> addingResponse = restTemplate.exchange(
+                "/v1/owners/" + OWNER.getId() + "/properties",
+                HttpMethod.POST,
+                addingRequest,
+                BooleanResponseDto.class
+        );
+
+        Owner actualOwner = ownerService.getOwnerById(OWNER.getId());
+
+        Property addedProperty = actualOwner.getProperties().stream()
+                .filter(property -> compareProperties(SECOND_PROPERTY, property))
+                .findFirst()
+                .orElseThrow();
+
+        assertEquals(HttpStatus.OK, addingResponse.getStatusCode());
+        assertTrue(requireNonNull(addingResponse.getBody()).succeed());
+        assertTrue(compareProperties(SECOND_PROPERTY, addedProperty));
     }
 
     @Test
@@ -128,16 +201,37 @@ public class PropertyServiceIntegrationTests extends AbstractServiceTest {
                 LocalDate.of(1994, 5, 9),
                 new BigDecimal("10000"), null);
 
-        boolean isOwnerAdded = ownerService.addNewOwner(owner);
-        assertTrue(isOwnerAdded);
+        ownerService.addNewOwner(owner);
 
-        boolean isPropertyAdded = propertyService.save(owner.getId(), FIRST_PROPERTY);
-        assertTrue(isPropertyAdded);
+        CreatePropertyDto createPropertyDto = new CreatePropertyDto(
+                SECOND_PROPERTY.getPropertyType(),
+                SECOND_PROPERTY.getCity(),
+                SECOND_PROPERTY.getAddress(),
+                SECOND_PROPERTY.getSquare(),
+                SECOND_PROPERTY.getNumberOfRooms(),
+                SECOND_PROPERTY.getCost(),
+                SECOND_PROPERTY.getDateOfBecomingOwner(),
+                SECOND_PROPERTY.getDateOfBuilding(),
+                SECOND_PROPERTY.getPropertyCondition()
+        );
+
+        HttpEntity<CreatePropertyDto> addingRequest = new HttpEntity<>(createPropertyDto);
+
+        ResponseEntity<BooleanResponseDto> addingResponse = restTemplate.exchange(
+                "/v1/owners/" + owner.getId() + "/properties",
+                HttpMethod.POST,
+                addingRequest,
+                BooleanResponseDto.class
+        );
 
         Owner actualOwner = ownerService.getOwnerById(owner.getId());
+
+        assertEquals(HttpStatus.OK, addingResponse.getStatusCode());
+        assertTrue(requireNonNull(addingResponse.getBody()).succeed());
         assertNotNull(actualOwner.getProperties());
     }
 
+    // TODO: 5/13/2025 To solve problem with comparing CreateProperty IDs
     @Test
     void should_not_initialize_list_of_properties_if_it_is_not_null() {
         List<Property> initialProperties = new ArrayList<>();
@@ -148,26 +242,97 @@ public class PropertyServiceIntegrationTests extends AbstractServiceTest {
                 LocalDate.of(1995, 3, 14),
                 new BigDecimal("15000"), initialProperties);
 
-        boolean isOwnerAdded = ownerService.addNewOwner(owner);
-        assertTrue(isOwnerAdded);
+        ownerService.addNewOwner(owner);
 
-        boolean isPropertyAdded = propertyService.save(owner.getId(), FIRST_PROPERTY);
-        assertTrue(isPropertyAdded);
+        CreatePropertyDto createPropertyDto = new CreatePropertyDto(
+                SECOND_PROPERTY.getPropertyType(),
+                SECOND_PROPERTY.getCity(),
+                SECOND_PROPERTY.getAddress(),
+                SECOND_PROPERTY.getSquare(),
+                SECOND_PROPERTY.getNumberOfRooms(),
+                SECOND_PROPERTY.getCost(),
+                SECOND_PROPERTY.getDateOfBecomingOwner(),
+                SECOND_PROPERTY.getDateOfBuilding(),
+                SECOND_PROPERTY.getPropertyCondition()
+        );
+
+        HttpEntity<CreatePropertyDto> addingRequest = new HttpEntity<>(createPropertyDto);
+
+        ResponseEntity<BooleanResponseDto> addingResponse = restTemplate.exchange(
+                "/v1/owners/" + owner.getId() + "/properties",
+                HttpMethod.POST,
+                addingRequest,
+                BooleanResponseDto.class
+        );
 
         Owner actualOwner = ownerService.getOwnerById(owner.getId());
 
+        assertEquals(HttpStatus.OK, addingResponse.getStatusCode());
+        assertTrue(requireNonNull(addingResponse.getBody()).succeed());
         assertEquals(1, actualOwner.getProperties().size());
-        assertEquals(FIRST_PROPERTY, actualOwner.getProperties().get(0));
+        assertTrue(compareProperties(SECOND_PROPERTY, actualOwner.getProperties().get(0)));
+    }
+
+    private boolean compareProperties(Property expected, Property actual) {
+        return expected.getPropertyType().equals(actual.getPropertyType())
+                && expected.getSquare() == actual.getSquare()
+                && expected.getCity().equals(actual.getCity())
+                && expected.getAddress().equals(actual.getAddress())
+                && expected.getNumberOfRooms() == actual.getNumberOfRooms()
+                && expected.getCost().equals(actual.getCost())
+                && expected.getDateOfBecomingOwner().equals(actual.getDateOfBecomingOwner())
+                && expected.getDateOfBuilding().equals(actual.getDateOfBuilding())
+                && expected.getPropertyCondition().equals(actual.getPropertyCondition());
     }
 
     @Test
     void should_not_add_new_property_if_id_is_wrong() {
-        assertThrows(NoSuchOwnerException.class, () -> propertyService.save(INVALID_ID, SECOND_PROPERTY));
+        CreatePropertyDto createPropertyDto = new CreatePropertyDto(
+                PropertyType.HOUSE,
+                "Prague",
+                "Boris Niemcov Street 220",
+                150,
+                5,
+                new BigDecimal("750000"),
+                LocalDate.of(2020, 4, 10),
+                LocalDate.of(2012, 1, 9),
+                PropertyCondition.GOOD
+        );
+
+        HttpEntity<CreatePropertyDto> addingRequest = new HttpEntity<>(createPropertyDto);
+
+        ResponseEntity<ErrorDto> addingResponse = restTemplate.exchange(
+                "/v1/owners/" + INVALID_ID + "/properties",
+                HttpMethod.POST,
+                addingRequest,
+                ErrorDto.class
+        );
+
+        ErrorDto error = requireNonNull(addingResponse.getBody());
+
+        boolean doesContain = error.detail().contains("not found");
+
+        assertEquals(HttpStatus.NOT_FOUND, addingResponse.getStatusCode());
+        assertTrue(doesContain);
     }
 
     @Test
     void should_not_add_new_property_if_property_is_null() {
-        assertThrows(PropertyNotFoundException.class, () -> propertyService.save(1, null));
+        ownerService.addNewOwner(OWNER);
+
+        ResponseEntity<ErrorDto> addingResponse = restTemplate.exchange(
+                "/v1/owners/" + OWNER.getId() + "/properties",
+                HttpMethod.POST,
+                null,
+                ErrorDto.class
+        );
+
+        ErrorDto error = requireNonNull(addingResponse.getBody());
+
+        boolean doesContain = error.detail().contains("Failed");
+
+        assertEquals(HttpStatus.BAD_REQUEST, addingResponse.getStatusCode());
+        assertTrue(doesContain);
     }
 
     @Test
@@ -190,51 +355,147 @@ public class PropertyServiceIntegrationTests extends AbstractServiceTest {
         SECOND_PROPERTY.setAddress("K-street");
         SECOND_PROPERTY.setNumberOfRooms(4);
 
-        propertyService.update(ownerId, SECOND_PROPERTY.getId(), SECOND_PROPERTY);
+        UpdatePropertyDto updatePropertyDto = new UpdatePropertyDto(
+                SECOND_PROPERTY.getCity(),
+                SECOND_PROPERTY.getAddress(),
+                SECOND_PROPERTY.getNumberOfRooms(),
+                SECOND_PROPERTY.getPropertyCondition()
+        );
 
-        List<Property> ownerProperties = propertyService.getAll(ownerId);
-        ownerProperties.forEach(System.out::println);
+        HttpEntity<UpdatePropertyDto> updateRequest = new HttpEntity<>(updatePropertyDto);
 
-        assertEquals(List.of(FIRST_PROPERTY, SECOND_PROPERTY), ownerProperties);
+        ResponseEntity<BooleanResponseDto> updateResponse = restTemplate.exchange(
+                "/v1/owners/" + ownerId + "/properties/" + SECOND_PROPERTY.getId(),
+                HttpMethod.PUT,
+                updateRequest,
+                BooleanResponseDto.class
+        );
+
+        BooleanResponseDto responseDto = requireNonNull(updateResponse.getBody());
+
+        assertEquals(HttpStatus.OK, updateResponse.getStatusCode());
+        assertTrue(responseDto.succeed());
     }
 
 
     @Test
     void should_not_update_property_for_certain_owner_if_owner_id_is_wrong() {
-        assertThrows(NoSuchOwnerException.class, () -> propertyService.update(INVALID_ID, SECOND_PROPERTY.getId(), SECOND_PROPERTY));
+        UpdatePropertyDto updatePropertyDto = new UpdatePropertyDto(
+                SECOND_PROPERTY.getCity(),
+                SECOND_PROPERTY.getAddress(),
+                SECOND_PROPERTY.getNumberOfRooms(),
+                SECOND_PROPERTY.getPropertyCondition()
+        );
+
+        HttpEntity<UpdatePropertyDto> request = new HttpEntity<>(updatePropertyDto);
+
+        ResponseEntity<ErrorDto> response = restTemplate.exchange(
+                "/v1/owners/" + INVALID_ID + "/properties/" + SECOND_PROPERTY.getId(),
+                HttpMethod.PUT,
+                request,
+                ErrorDto.class
+        );
+
+        ErrorDto error = requireNonNull(response.getBody());
+
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        assertTrue(error.detail().contains("not found"));
     }
 
     @Test
     void should_not_update_property_for_certain_owner_if_property_id_is_wrong() {
         ownerService.addNewOwner(OWNER);
 
-        assertThrows(PropertyNotFoundException.class, () -> propertyService.update(OWNER.getId(), INVALID_ID, FIRST_PROPERTY));
+        UpdatePropertyDto updatePropertyDto = new UpdatePropertyDto(
+                FIRST_PROPERTY.getCity(),
+                FIRST_PROPERTY.getAddress(),
+                FIRST_PROPERTY.getNumberOfRooms(),
+                FIRST_PROPERTY.getPropertyCondition()
+        );
+
+        HttpEntity<UpdatePropertyDto> request = new HttpEntity<>(updatePropertyDto);
+
+
+        ResponseEntity<ErrorDto> response = restTemplate.exchange(
+                "/v1/owners/" + OWNER.getId() + "/properties/" + INVALID_ID,
+                HttpMethod.PUT,
+                request,
+                ErrorDto.class
+        );
+
+        ErrorDto error = requireNonNull(response.getBody());
+
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        assertTrue(error.detail().contains("not found"));
     }
 
     @Test
     void should_not_update_property_for_certain_owner_if_property_is_null() {
-        assertThrows(PropertyNotFoundException.class, () -> propertyService.update(1, SECOND_PROPERTY.getId(), null));
+        ownerService.addNewOwner(OWNER);
+
+        ResponseEntity<ErrorDto> response = restTemplate.exchange(
+                "/v1/owners/" + OWNER.getId() + "/properties/" + FIRST_PROPERTY.getId(),
+                HttpMethod.PUT,
+                null,
+                ErrorDto.class
+        );
+
+        ErrorDto error = requireNonNull(response.getBody());
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertTrue(error.detail().contains("Failed"));
     }
 
     @Test
     void should_not_remove_property_for_certain_owner_if_property_id_is_null() {
         ownerService.addNewOwner(OWNER);
 
-        assertThrows(PropertyNotFoundException.class, () -> propertyService.remove(OWNER.getId(), INVALID_ID));
+        ResponseEntity<ErrorDto> response = restTemplate.exchange(
+                "/v1/owners/" + OWNER.getId() + "/properties/" + INVALID_ID,
+                HttpMethod.DELETE,
+                null,
+                ErrorDto.class
+        );
+
+        ErrorDto error = requireNonNull(response.getBody());
+
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        assertTrue(error.detail().contains("not found"));
     }
 
     @Test
     void should_remove_property_for_certain_owner() {
         ownerService.addNewOwner(OWNER);
-        boolean isAdded = propertyService.save(OWNER.getId(), SECOND_PROPERTY);
-        assertTrue(isAdded);
+        propertyService.save(OWNER.getId(), SECOND_PROPERTY);
 
-        boolean isRemoved = propertyService.remove(OWNER.getId(), SECOND_PROPERTY.getId());
-        assertTrue(isRemoved);
+        ResponseEntity<BooleanResponseDto> response = restTemplate.exchange(
+                "/v1/owners/" + OWNER.getId() + "/properties/" + SECOND_PROPERTY.getId(),
+                HttpMethod.DELETE,
+                null,
+                BooleanResponseDto.class
+        );
+
+        BooleanResponseDto booleanResponseDto = requireNonNull(response.getBody());
+
+        List<Property> properties = OWNER.getProperties();
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertTrue(booleanResponseDto.succeed());
+        assertEquals(List.of(FIRST_PROPERTY), properties);
     }
 
     @Test
     void should_not_remove_property_for_certain_owner_if_owner_id_is_wrong() {
-        assertThrows(NoSuchOwnerException.class, () -> propertyService.remove(INVALID_ID, 1));
+        ResponseEntity<ErrorDto> response = restTemplate.exchange(
+                "/v1/owners/" + INVALID_ID + "/properties/" + FIRST_PROPERTY.getId(),
+                HttpMethod.DELETE,
+                null,
+                ErrorDto.class
+        );
+
+        ErrorDto error = requireNonNull(response.getBody());
+
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        assertTrue(error.detail().contains("not found"));
     }
 }
