@@ -3,11 +3,11 @@ package com.tvo.propertyregister.integration;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tvo.propertyregister.exception.DontHaveTaxDebtsException;
-import com.tvo.propertyregister.exception.NoDebtorsInDebtorListException;
-import com.tvo.propertyregister.exception.NoSuchOwnerException;
 import com.tvo.propertyregister.integration.config.repository.OwnerTestRepository;
+import com.tvo.propertyregister.model.dto.BooleanResponseDto;
 import com.tvo.propertyregister.model.dto.EmailEventDto;
 import com.tvo.propertyregister.model.dto.EmailType;
+import com.tvo.propertyregister.model.dto.ErrorDto;
 import com.tvo.propertyregister.model.owner.FamilyStatus;
 import com.tvo.propertyregister.model.owner.Owner;
 import com.tvo.propertyregister.model.property.Property;
@@ -21,9 +21,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-import org.testcontainers.containers.RabbitMQContainer;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -32,9 +35,10 @@ import java.util.Map;
 import java.util.Objects;
 
 import static com.tvo.propertyregister.service.utils.Constants.EMAIL_TOPIC;
+import static java.util.Objects.requireNonNull;
 import static org.junit.jupiter.api.Assertions.*;
 
-public class DebtorNotificationServiceIntegrationTests extends AbstractServiceTest {
+public class DebtorNotificationServiceIntegrationTest extends AbstractServiceTest {
 
     @Autowired
     private OwnerTestRepository ownerTestRepository;
@@ -50,6 +54,9 @@ public class DebtorNotificationServiceIntegrationTests extends AbstractServiceTe
 
     @Autowired
     private ObjectMapper mapper;
+
+    @Autowired
+    private TestRestTemplate restTemplate;
 
     private static final Property FIRST_HOUSE = new Property(2, PropertyType.HOUSE, "Prague", "Boris Niemcov Street 220",
             150, 5, new BigDecimal("750000"),
@@ -109,14 +116,21 @@ public class DebtorNotificationServiceIntegrationTests extends AbstractServiceTe
 
         ownerTestRepository.save(debtor);
 
-        debtorNotificationService.notifyAllDebtors();
+        ResponseEntity<BooleanResponseDto> response = restTemplate.exchange(
+                "/v1/debtors/notify",
+                HttpMethod.POST,
+                null,
+                BooleanResponseDto.class
+        );
 
+        BooleanResponseDto booleanResponseDto = requireNonNull(response.getBody());
         String body = (String) rabbitTemplate.receiveAndConvert(EMAIL_TOPIC);
-
-        assertTrue(Objects.nonNull(body));
-
         EmailEventDto receivedEmailDto = mapper.readValue(body, EmailEventDto.class);
 
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertTrue(booleanResponseDto.succeed());
+
+        assertTrue(Objects.nonNull(body));
         assertEquals(expectedEmailDto, receivedEmailDto);
     }
 
@@ -158,17 +172,25 @@ public class DebtorNotificationServiceIntegrationTests extends AbstractServiceTe
         ownerTestRepository.save(firstDebtor);
         ownerTestRepository.save(secondDebtor);
 
-        debtorNotificationService.notifyAllDebtors();
+        ResponseEntity<BooleanResponseDto> response = restTemplate.exchange(
+                "/v1/debtors/notify",
+                HttpMethod.POST,
+                null,
+                BooleanResponseDto.class
+        );
 
+        BooleanResponseDto booleanResponseDto = requireNonNull(response.getBody());
         String firstBody = (String) rabbitTemplate.receiveAndConvert(EMAIL_TOPIC);
         String secondBody = (String) rabbitTemplate.receiveAndConvert(EMAIL_TOPIC);
-
-        assertTrue(Objects.nonNull(firstBody));
-        assertTrue(Objects.nonNull(secondBody));
 
         EmailEventDto firstReceivedEmailDto = mapper.readValue(firstBody, EmailEventDto.class);
         EmailEventDto secondReceivedEmailDto = mapper.readValue(secondBody, EmailEventDto.class);
 
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertTrue(booleanResponseDto.succeed());
+
+        assertTrue(Objects.nonNull(firstBody));
+        assertTrue(Objects.nonNull(secondBody));
         assertEquals(expectedEmailDto1, firstReceivedEmailDto);
         assertEquals(expectedEmailDto2, secondReceivedEmailDto);
     }
@@ -201,22 +223,39 @@ public class DebtorNotificationServiceIntegrationTests extends AbstractServiceTe
         ownerTestRepository.save(debtor);
         ownerTestRepository.save(owner);
 
-        debtorNotificationService.notifyAllDebtors();
+        ResponseEntity<BooleanResponseDto> response = restTemplate.exchange(
+                "/v1/debtors/notify",
+                HttpMethod.POST,
+                null,
+                BooleanResponseDto.class
+        );
 
+        BooleanResponseDto booleanResponseDto = requireNonNull(response.getBody());
         String firstBody = (String) rabbitTemplate.receiveAndConvert(EMAIL_TOPIC);
         String secondBody = (String) rabbitTemplate.receiveAndConvert(EMAIL_TOPIC);
+        EmailEventDto receivedEvent = mapper.readValue(firstBody, EmailEventDto.class);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertTrue(booleanResponseDto.succeed());
 
         assertTrue(Objects.nonNull(firstBody));
         assertNull(secondBody);
-
-        EmailEventDto receivedEvent = mapper.readValue(firstBody, EmailEventDto.class);
-
         assertEquals(expectedEvent, receivedEvent);
     }
 
     @Test
     void should_not_notify_debtors_if_the_list_is_empty() {
-        assertThrows(NoDebtorsInDebtorListException.class, () -> debtorNotificationService.notifyAllDebtors());
+        ResponseEntity<ErrorDto> response = restTemplate.exchange(
+                "/v1/debtors/notify",
+                HttpMethod.POST,
+                null,
+                ErrorDto.class
+        );
+
+        ErrorDto error = requireNonNull(response.getBody());
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertTrue(error.detail().contains("No debtors in debtor list"));
     }
 
     @Test
@@ -264,13 +303,21 @@ public class DebtorNotificationServiceIntegrationTests extends AbstractServiceTe
 
         ownerTestRepository.save(debtor);
 
-        debtorNotificationService.notifyDebtorById(debtor.getId());
+        ResponseEntity<BooleanResponseDto> response = restTemplate.exchange(
+                "/v1/debtors/notify/" + debtor.getId(),
+                HttpMethod.POST,
+                null,
+                BooleanResponseDto.class
+        );
 
+        BooleanResponseDto booleanResponseDto = requireNonNull(response.getBody());
         String body = (String) rabbitTemplate.receiveAndConvert(EMAIL_TOPIC);
-        assertTrue(Objects.nonNull(body));
-
         EmailEventDto receivedEvent = mapper.readValue(body, EmailEventDto.class);
 
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertTrue(booleanResponseDto.succeed());
+
+        assertTrue(Objects.nonNull(body));
         assertEquals(expectedEvent, receivedEvent);
     }
 
@@ -285,6 +332,16 @@ public class DebtorNotificationServiceIntegrationTests extends AbstractServiceTe
 
         ownerTestRepository.save(debtor);
 
-        assertThrows(DontHaveTaxDebtsException.class, () -> debtorNotificationService.notifyDebtorById(debtor.getId()));
+        ResponseEntity<ErrorDto> response = restTemplate.exchange(
+                "/v1/debtors/notify/" + debtor.getId(),
+                HttpMethod.POST,
+                null,
+                ErrorDto.class
+        );
+
+        ErrorDto error = requireNonNull(response.getBody());
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertTrue(error.detail().contains("Does not exists or his tax debt is lower or equals zero!"));
     }
 }

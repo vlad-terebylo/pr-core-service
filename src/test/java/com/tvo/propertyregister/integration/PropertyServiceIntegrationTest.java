@@ -1,7 +1,5 @@
 package com.tvo.propertyregister.integration;
 
-import com.tvo.propertyregister.exception.NoSuchOwnerException;
-import com.tvo.propertyregister.exception.PropertyNotFoundException;
 import com.tvo.propertyregister.integration.config.repository.OwnerTestRepository;
 import com.tvo.propertyregister.integration.config.repository.PropertyTestRepository;
 import com.tvo.propertyregister.model.dto.BooleanResponseDto;
@@ -34,7 +32,7 @@ import java.util.List;
 import static java.util.Objects.requireNonNull;
 import static org.junit.jupiter.api.Assertions.*;
 
-public class PropertyServiceIntegrationTests extends AbstractServiceTest {
+public class PropertyServiceIntegrationTest extends AbstractServiceTest {
 
     @Autowired
     private TestRestTemplate restTemplate;
@@ -69,7 +67,7 @@ public class PropertyServiceIntegrationTests extends AbstractServiceTest {
             true, "lindajohnson@gmail.com",
             "+123456789",
             LocalDate.of(1986, 8, 9),
-            new BigDecimal("0"), List.of(FIRST_PROPERTY));
+            new BigDecimal("0"), List.of());
 
     private static final int INVALID_ID = -1;
 
@@ -98,7 +96,7 @@ public class PropertyServiceIntegrationTests extends AbstractServiceTest {
     @Test
     void should_get_all_properties_by_owner_id() {
         ownerService.addNewOwner(OWNER);
-        propertyService.save(OWNER.getId(), SECOND_PROPERTY);
+        propertyService.add(OWNER.getId(), SECOND_PROPERTY);
 
         ResponseEntity<List<Property>> response = restTemplate.exchange(
                 "/v1/owners/" + OWNER.getId() + "/properties",
@@ -111,7 +109,7 @@ public class PropertyServiceIntegrationTests extends AbstractServiceTest {
         List<Property> properties = requireNonNull(response.getBody());
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(List.of(FIRST_PROPERTY, SECOND_PROPERTY), properties);
+        assertEquals(List.of(SECOND_PROPERTY), properties);
     }
 
     @Test
@@ -154,21 +152,20 @@ public class PropertyServiceIntegrationTests extends AbstractServiceTest {
         assertEquals(List.of(), properties);
     }
 
-    // TODO: 5/13/2025 To solve problem with comparing CreateProperty IDs(in DTOs property id is 1)
     @Test
     void should_add_new_property_to_certain_owner() {
         ownerService.addNewOwner(OWNER);
 
         CreatePropertyDto createPropertyDto = new CreatePropertyDto(
-                SECOND_PROPERTY.getPropertyType(),
-                SECOND_PROPERTY.getCity(),
-                SECOND_PROPERTY.getAddress(),
-                SECOND_PROPERTY.getSquare(),
-                SECOND_PROPERTY.getNumberOfRooms(),
-                SECOND_PROPERTY.getCost(),
-                SECOND_PROPERTY.getDateOfBecomingOwner(),
-                SECOND_PROPERTY.getDateOfBuilding(),
-                SECOND_PROPERTY.getPropertyCondition()
+                FIRST_PROPERTY.getPropertyType(),
+                FIRST_PROPERTY.getCity(),
+                FIRST_PROPERTY.getAddress(),
+                FIRST_PROPERTY.getSquare(),
+                FIRST_PROPERTY.getNumberOfRooms(),
+                FIRST_PROPERTY.getCost(),
+                FIRST_PROPERTY.getDateOfBecomingOwner(),
+                FIRST_PROPERTY.getDateOfBuilding(),
+                FIRST_PROPERTY.getPropertyCondition()
         );
 
         HttpEntity<CreatePropertyDto> addingRequest = new HttpEntity<>(createPropertyDto);
@@ -182,14 +179,9 @@ public class PropertyServiceIntegrationTests extends AbstractServiceTest {
 
         Owner actualOwner = ownerService.getOwnerById(OWNER.getId());
 
-        Property addedProperty = actualOwner.getProperties().stream()
-                .filter(property -> compareProperties(SECOND_PROPERTY, property))
-                .findFirst()
-                .orElseThrow();
-
         assertEquals(HttpStatus.OK, addingResponse.getStatusCode());
         assertTrue(requireNonNull(addingResponse.getBody()).succeed());
-        assertTrue(compareProperties(SECOND_PROPERTY, addedProperty));
+        assertEquals(List.of(FIRST_PROPERTY), actualOwner.getProperties());
     }
 
     @Test
@@ -204,15 +196,15 @@ public class PropertyServiceIntegrationTests extends AbstractServiceTest {
         ownerService.addNewOwner(owner);
 
         CreatePropertyDto createPropertyDto = new CreatePropertyDto(
-                SECOND_PROPERTY.getPropertyType(),
-                SECOND_PROPERTY.getCity(),
-                SECOND_PROPERTY.getAddress(),
-                SECOND_PROPERTY.getSquare(),
-                SECOND_PROPERTY.getNumberOfRooms(),
-                SECOND_PROPERTY.getCost(),
-                SECOND_PROPERTY.getDateOfBecomingOwner(),
-                SECOND_PROPERTY.getDateOfBuilding(),
-                SECOND_PROPERTY.getPropertyCondition()
+                FIRST_PROPERTY.getPropertyType(),
+                FIRST_PROPERTY.getCity(),
+                FIRST_PROPERTY.getAddress(),
+                FIRST_PROPERTY.getSquare(),
+                FIRST_PROPERTY.getNumberOfRooms(),
+                FIRST_PROPERTY.getCost(),
+                FIRST_PROPERTY.getDateOfBecomingOwner(),
+                FIRST_PROPERTY.getDateOfBuilding(),
+                FIRST_PROPERTY.getPropertyCondition()
         );
 
         HttpEntity<CreatePropertyDto> addingRequest = new HttpEntity<>(createPropertyDto);
@@ -229,9 +221,9 @@ public class PropertyServiceIntegrationTests extends AbstractServiceTest {
         assertEquals(HttpStatus.OK, addingResponse.getStatusCode());
         assertTrue(requireNonNull(addingResponse.getBody()).succeed());
         assertNotNull(actualOwner.getProperties());
+        assertEquals(List.of(FIRST_PROPERTY), actualOwner.getProperties());
     }
 
-    // TODO: 5/13/2025 To solve problem with comparing CreateProperty IDs
     @Test
     void should_not_initialize_list_of_properties_if_it_is_not_null() {
         List<Property> initialProperties = new ArrayList<>();
@@ -245,15 +237,15 @@ public class PropertyServiceIntegrationTests extends AbstractServiceTest {
         ownerService.addNewOwner(owner);
 
         CreatePropertyDto createPropertyDto = new CreatePropertyDto(
-                SECOND_PROPERTY.getPropertyType(),
-                SECOND_PROPERTY.getCity(),
-                SECOND_PROPERTY.getAddress(),
-                SECOND_PROPERTY.getSquare(),
-                SECOND_PROPERTY.getNumberOfRooms(),
-                SECOND_PROPERTY.getCost(),
-                SECOND_PROPERTY.getDateOfBecomingOwner(),
-                SECOND_PROPERTY.getDateOfBuilding(),
-                SECOND_PROPERTY.getPropertyCondition()
+                FIRST_PROPERTY.getPropertyType(),
+                FIRST_PROPERTY.getCity(),
+                FIRST_PROPERTY.getAddress(),
+                FIRST_PROPERTY.getSquare(),
+                FIRST_PROPERTY.getNumberOfRooms(),
+                FIRST_PROPERTY.getCost(),
+                FIRST_PROPERTY.getDateOfBecomingOwner(),
+                FIRST_PROPERTY.getDateOfBuilding(),
+                FIRST_PROPERTY.getPropertyCondition()
         );
 
         HttpEntity<CreatePropertyDto> addingRequest = new HttpEntity<>(createPropertyDto);
@@ -270,19 +262,7 @@ public class PropertyServiceIntegrationTests extends AbstractServiceTest {
         assertEquals(HttpStatus.OK, addingResponse.getStatusCode());
         assertTrue(requireNonNull(addingResponse.getBody()).succeed());
         assertEquals(1, actualOwner.getProperties().size());
-        assertTrue(compareProperties(SECOND_PROPERTY, actualOwner.getProperties().get(0)));
-    }
-
-    private boolean compareProperties(Property expected, Property actual) {
-        return expected.getPropertyType().equals(actual.getPropertyType())
-                && expected.getSquare() == actual.getSquare()
-                && expected.getCity().equals(actual.getCity())
-                && expected.getAddress().equals(actual.getAddress())
-                && expected.getNumberOfRooms() == actual.getNumberOfRooms()
-                && expected.getCost().equals(actual.getCost())
-                && expected.getDateOfBecomingOwner().equals(actual.getDateOfBecomingOwner())
-                && expected.getDateOfBuilding().equals(actual.getDateOfBuilding())
-                && expected.getPropertyCondition().equals(actual.getPropertyCondition());
+        assertEquals(List.of(FIRST_PROPERTY), actualOwner.getProperties());
     }
 
     @Test
@@ -310,10 +290,10 @@ public class PropertyServiceIntegrationTests extends AbstractServiceTest {
 
         ErrorDto error = requireNonNull(addingResponse.getBody());
 
-        boolean doesContain = error.detail().contains("not found");
+        boolean errorIsValid = error.detail().contains("not found");
 
         assertEquals(HttpStatus.NOT_FOUND, addingResponse.getStatusCode());
-        assertTrue(doesContain);
+        assertTrue(errorIsValid);
     }
 
     @Test
@@ -329,10 +309,10 @@ public class PropertyServiceIntegrationTests extends AbstractServiceTest {
 
         ErrorDto error = requireNonNull(addingResponse.getBody());
 
-        boolean doesContain = error.detail().contains("Failed");
+        boolean errorIsValid = error.detail().contains("Failed");
 
         assertEquals(HttpStatus.BAD_REQUEST, addingResponse.getStatusCode());
-        assertTrue(doesContain);
+        assertTrue(errorIsValid);
     }
 
     @Test
@@ -344,37 +324,45 @@ public class PropertyServiceIntegrationTests extends AbstractServiceTest {
                 LocalDate.of(1986, 8, 9),
                 new BigDecimal("0"), new ArrayList<>());
 
+        Property property = new Property(2, PropertyType.HOUSE, "Prague", "Boris Niemcov Street 220",
+                150, 5, new BigDecimal("750000"),
+                LocalDate.of(2020, 4, 10),
+                LocalDate.of(2012, 1, 9),
+                PropertyCondition.GOOD);
+
         ownerService.addNewOwner(owner);
 
         int ownerId = owner.getId();
 
-        propertyService.save(ownerId, FIRST_PROPERTY);
-        propertyService.save(ownerId, SECOND_PROPERTY);
+        propertyService.add(ownerId, FIRST_PROPERTY);
+        propertyService.add(ownerId, property);
 
-        SECOND_PROPERTY.setCity("Kyiv");
-        SECOND_PROPERTY.setAddress("K-street");
-        SECOND_PROPERTY.setNumberOfRooms(4);
+        property.setCity("Kyiv");
+        property.setAddress("K-street");
+        property.setNumberOfRooms(4);
 
         UpdatePropertyDto updatePropertyDto = new UpdatePropertyDto(
-                SECOND_PROPERTY.getCity(),
-                SECOND_PROPERTY.getAddress(),
-                SECOND_PROPERTY.getNumberOfRooms(),
-                SECOND_PROPERTY.getPropertyCondition()
+                property.getCity(),
+                property.getAddress(),
+                property.getNumberOfRooms(),
+                property.getPropertyCondition()
         );
 
         HttpEntity<UpdatePropertyDto> updateRequest = new HttpEntity<>(updatePropertyDto);
 
         ResponseEntity<BooleanResponseDto> updateResponse = restTemplate.exchange(
-                "/v1/owners/" + ownerId + "/properties/" + SECOND_PROPERTY.getId(),
+                "/v1/owners/" + ownerId + "/properties/" + property.getId(),
                 HttpMethod.PUT,
                 updateRequest,
                 BooleanResponseDto.class
         );
 
+        Owner actualOwner = ownerService.getOwnerById(ownerId);
         BooleanResponseDto responseDto = requireNonNull(updateResponse.getBody());
 
         assertEquals(HttpStatus.OK, updateResponse.getStatusCode());
         assertTrue(responseDto.succeed());
+        assertEquals(List.of(FIRST_PROPERTY, property), actualOwner.getProperties());
     }
 
 
@@ -466,7 +454,7 @@ public class PropertyServiceIntegrationTests extends AbstractServiceTest {
     @Test
     void should_remove_property_for_certain_owner() {
         ownerService.addNewOwner(OWNER);
-        propertyService.save(OWNER.getId(), SECOND_PROPERTY);
+        propertyService.add(OWNER.getId(), SECOND_PROPERTY);
 
         ResponseEntity<BooleanResponseDto> response = restTemplate.exchange(
                 "/v1/owners/" + OWNER.getId() + "/properties/" + SECOND_PROPERTY.getId(),
@@ -481,7 +469,7 @@ public class PropertyServiceIntegrationTests extends AbstractServiceTest {
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertTrue(booleanResponseDto.succeed());
-        assertEquals(List.of(FIRST_PROPERTY), properties);
+        assertEquals(List.of(), properties);
     }
 
     @Test

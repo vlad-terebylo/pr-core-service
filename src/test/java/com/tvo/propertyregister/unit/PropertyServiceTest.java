@@ -15,7 +15,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.testcontainers.shaded.com.fasterxml.jackson.databind.annotation.JsonAppend;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -144,7 +143,7 @@ public class PropertyServiceTest {
     @Test
     public void should_add_new_property_to_certain_owner() {
         when(ownerRepository.findById(OWNER.getId())).thenReturn(OWNER);
-        propertyService.save(OWNER.getId(), SECOND_PROPERTY);
+        propertyService.add(OWNER.getId(), SECOND_PROPERTY);
 
         verify(propertyRepository, times(1)).save(OWNER, SECOND_PROPERTY);
     }
@@ -153,7 +152,7 @@ public class PropertyServiceTest {
     public void should_not_add_new_property_if_owner_does_not_exists() {
         when(ownerRepository.findById(INVALID_OWNER.getId())).thenReturn(null);
 
-        assertThrows(NoSuchOwnerException.class, () -> propertyService.save(INVALID_OWNER.getId(), SECOND_PROPERTY));
+        assertThrows(NoSuchOwnerException.class, () -> propertyService.add(INVALID_OWNER.getId(), SECOND_PROPERTY));
     }
 
     @Test

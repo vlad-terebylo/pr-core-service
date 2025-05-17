@@ -52,9 +52,9 @@ public class ControllerExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(value = NoDebtorsInDebtorListException.class)
     public ResponseEntity<Object> handleNoDebtorsInDebtorListException(Exception exception, WebRequest request) {
-        ErrorDto error = new ErrorDto(NO_CONTENT.getReasonPhrase(), exception.getMessage());
+        ErrorDto error = new ErrorDto(BAD_REQUEST.getReasonPhrase(), exception.getMessage());
 
-        return super.handleExceptionInternal(exception, error, new HttpHeaders(), NO_CONTENT, request);
+        return super.handleExceptionInternal(exception, error, new HttpHeaders(), BAD_REQUEST, request);
     }
 
     @ExceptionHandler(value = PropertyNotFoundException.class)

@@ -1,10 +1,7 @@
 package com.tvo.propertyregister.integration;
 
-import com.tvo.propertyregister.exception.InvalidTaxRateNumberException;
-import com.tvo.propertyregister.exception.NoSuchOwnerException;
-import com.tvo.propertyregister.exception.PropertyNotFoundException;
-import com.tvo.propertyregister.exception.UpdateOwnerFailedException;
 import com.tvo.propertyregister.integration.config.repository.OwnerTestRepository;
+import com.tvo.propertyregister.integration.config.repository.PropertyTestRepository;
 import com.tvo.propertyregister.integration.config.repository.TaxRateTestRepository;
 import com.tvo.propertyregister.model.TaxRate;
 import com.tvo.propertyregister.model.dto.*;
@@ -14,6 +11,7 @@ import com.tvo.propertyregister.model.property.Property;
 import com.tvo.propertyregister.model.property.PropertyCondition;
 import com.tvo.propertyregister.model.property.PropertyType;
 import com.tvo.propertyregister.service.OwnerService;
+import com.tvo.propertyregister.service.PropertyService;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.web.client.TestRestTemplate;
@@ -33,13 +31,19 @@ import static java.util.Objects.requireNonNull;
 import static org.junit.jupiter.api.Assertions.*;
 
 
-public class OwnerServiceIntegrationTests extends AbstractServiceTest {
+public class OwnerServiceIntegrationTest extends AbstractServiceTest {
 
     @Autowired
     private OwnerService ownerService;
 
     @Autowired
     private OwnerTestRepository ownerTestRepository;
+
+    @Autowired
+    private PropertyService propertyService;
+
+    @Autowired
+    private PropertyTestRepository propertyTestRepository;
 
     @Autowired
     private TaxRateTestRepository taxRateTestRepository;
@@ -56,12 +60,12 @@ public class OwnerServiceIntegrationTests extends AbstractServiceTest {
             LocalDate.of(2012, 1, 9),
             PropertyCondition.GOOD);
 
-    private static final Property HOUSE_1 = new Property(2, PropertyType.HOUSE, "Prague", "Boris Niemcov Street 220",
+    private static final Property FIRST_HOUSE = new Property(2, PropertyType.HOUSE, "Prague", "Boris Niemcov Street 220",
             150, 5, new BigDecimal("750000"),
             LocalDate.of(2020, 4, 10),
             LocalDate.of(2012, 1, 9),
             PropertyCondition.GOOD);
-    private static final Property HOUSE_2 = new Property(3, PropertyType.HOUSE, "Prague", "Evropska 6",
+    private static final Property SECOND_HOUSE = new Property(3, PropertyType.HOUSE, "Prague", "Evropska 6",
             300, 10, new BigDecimal("1000000"),
             LocalDate.of(2023, 4, 10),
             LocalDate.of(2023, 1, 9),
@@ -79,14 +83,14 @@ public class OwnerServiceIntegrationTests extends AbstractServiceTest {
             true, "lindajohnson@gmail.com",
             "+123456789",
             LocalDate.of(1986, 8, 9),
-            new BigDecimal("0"), List.of(HOUSE_1));
+            new BigDecimal("0"), List.of(FIRST_HOUSE));
 
     private static final Owner DEBTOR = new Owner(3, "Frank", "John",
             30, FamilyStatus.SINGLE,
             false, "frankjohn@gmail.com",
             "+456987123",
             LocalDate.of(1994, 5, 9),
-            new BigDecimal("10000.0"), List.of(HOUSE_2));
+            new BigDecimal("10000.0"), List.of(SECOND_HOUSE));
 
     private static final List<TaxRate> taxRates = List.of(
             new TaxRate(1, PropertyType.FLAT, new BigDecimal("6")),
@@ -440,6 +444,7 @@ public class OwnerServiceIntegrationTests extends AbstractServiceTest {
     @Test
     void should_count_tax_obligations_no_leeway() {
         ownerService.addNewOwner(SINGLE_OWNER_WITHOUT_CHILDREN);
+        propertyService.add(SINGLE_OWNER_WITHOUT_CHILDREN.getId(), FLAT);
 
         ResponseEntity<TaxObligationResponseDto> countTaxResponse = restTemplate.exchange(
                 "/v1/owners/" + SINGLE_OWNER_WITHOUT_CHILDREN.getId() + "/tax-obligations",
@@ -459,6 +464,7 @@ public class OwnerServiceIntegrationTests extends AbstractServiceTest {
     @Test
     void should_count_tax_obligations_with_multiple_leeway() {
         ownerService.addNewOwner(MARRIED_OWNER_WITH_CHILDREN);
+        propertyService.add(MARRIED_OWNER_WITH_CHILDREN.getId(), FIRST_HOUSE);
 
         ResponseEntity<TaxObligationResponseDto> countTaxResponse = restTemplate.exchange(
                 "/v1/owners/" + MARRIED_OWNER_WITH_CHILDREN.getId() + "/tax-obligations",
@@ -486,6 +492,7 @@ public class OwnerServiceIntegrationTests extends AbstractServiceTest {
                 new BigDecimal("0"), List.of(FLAT));
 
         ownerService.addNewOwner(owner);
+        propertyService.add(id, FLAT);
 
         ResponseEntity<TaxObligationResponseDto> countTaxResponse = restTemplate.exchange(
                 "/v1/owners/" + owner.getId() + "/tax-obligations",
@@ -513,6 +520,7 @@ public class OwnerServiceIntegrationTests extends AbstractServiceTest {
                 new BigDecimal("0"), List.of(FLAT));
 
         ownerService.addNewOwner(owner);
+        propertyService.add(id, FLAT);
 
         ResponseEntity<TaxObligationResponseDto> countTaxResponse = restTemplate.exchange(
                 "/v1/owners/" + owner.getId() + "/tax-obligations",

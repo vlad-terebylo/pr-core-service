@@ -31,7 +31,7 @@ public class PropertyService {
         return this.propertyRepository.findAll(ownerId);
     }
 
-    public boolean save(int ownerId, Property property) {
+    public boolean add(int ownerId, Property property) {
         if (Objects.isNull(property)) {
             throw new PropertyNotFoundException("This property is empty");
         }

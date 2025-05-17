@@ -166,9 +166,15 @@ public class OwnerServiceTest {
 
     @Test
     public void should_add_new_owner() {
-        ownerService.addNewOwner(OWNER);
+        Owner owner = new Owner(1, "John", "Smith",
+                30, FamilyStatus.SINGLE,
+                false, "johnsmith@gmail.com",
+                "+456987123",
+                LocalDate.of(1994, 8, 9),
+                new BigDecimal("0"), List.of(PROPERTY_FLAT, PROPERTY_HOUSE, PROPERTY_OFFICE));
+        ownerService.addNewOwner(owner);
 
-        verify(ownerRepository, times(1)).save(OWNER);
+        verify(ownerRepository, times(1)).save(owner);
     }
 
     @Test

@@ -48,7 +48,7 @@ public class OwnerController {
     public ResponseEntity<BooleanResponseDto> addNewProperty(
             @PathVariable int ownerId,
             @RequestBody CreatePropertyDto createPropertyDto) {
-        return ResponseEntity.ok(new BooleanResponseDto(this.propertyService.save(ownerId, new Property(createPropertyDto))));
+        return ResponseEntity.ok(new BooleanResponseDto(this.propertyService.add(ownerId, new Property(createPropertyDto))));
     }
 
     @PutMapping("/{id}")

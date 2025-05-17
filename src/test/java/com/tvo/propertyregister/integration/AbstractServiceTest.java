@@ -7,6 +7,8 @@ import org.springframework.test.context.ActiveProfiles;
 import org.testcontainers.containers.MongoDBContainer;
 import org.testcontainers.containers.RabbitMQContainer;
 
+// TODO: 5/17/2025 to view and refactor all tests(including integration and unit)
+
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
 @Import(TestConfig.class)

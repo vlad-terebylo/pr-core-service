@@ -11,15 +11,18 @@ import com.tvo.propertyregister.model.property.Property;
 import com.tvo.propertyregister.model.property.PropertyType;
 import com.tvo.propertyregister.repository.OwnerRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
 import static com.tvo.propertyregister.service.utils.Constants.TAXES_RATE_NUMBER;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class OwnerService {
@@ -60,6 +63,11 @@ public class OwnerService {
     public boolean addNewOwner(Owner owner) {
         if (Objects.isNull(owner)) {
             throw new NoSuchOwnerException("This owner does not exists");
+        }
+
+        if (Objects.nonNull(owner.getProperties())) {
+            log.info("During owner creation properties should be empty");
+            owner.setProperties(new ArrayList<>());
         }
 
         return this.ownerRepository.save(owner);

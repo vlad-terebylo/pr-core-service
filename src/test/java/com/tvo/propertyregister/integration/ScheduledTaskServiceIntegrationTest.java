@@ -31,12 +31,12 @@ public class ScheduledTaskServiceIntegrationTest extends AbstractServiceTest {
             LocalDate.of(2012, 1, 9),
             PropertyCondition.GOOD);
 
-    private static final Property HOUSE_1 = new Property(2, PropertyType.HOUSE, "Prague", "Boris Niemcov Street 220",
+    private static final Property FIRST_HOUSE = new Property(2, PropertyType.HOUSE, "Prague", "Boris Niemcov Street 220",
             150, 5, new BigDecimal("750000"),
             LocalDate.of(2020, 4, 10),
             LocalDate.of(2012, 1, 9),
             PropertyCondition.GOOD);
-    private static final Property HOUSE_2 = new Property(3, PropertyType.HOUSE, "Prague", "Evropska 6",
+    private static final Property SECOND_HOUSE = new Property(3, PropertyType.HOUSE, "Prague", "Evropska 6",
             300, 10, new BigDecimal("1000000"),
             LocalDate.of(2023, 4, 10),
             LocalDate.of(2023, 1, 9),
@@ -96,7 +96,7 @@ public class ScheduledTaskServiceIntegrationTest extends AbstractServiceTest {
                 false, "frankjohn@gmail.com",
                 "+456987123",
                 LocalDate.of(1994, 5, 9),
-                new BigDecimal("10000"), List.of(HOUSE_2));
+                new BigDecimal("10000"), List.of(SECOND_HOUSE));
 
         ownerService.addNewOwner(debtor);
 
@@ -115,13 +115,13 @@ public class ScheduledTaskServiceIntegrationTest extends AbstractServiceTest {
                 false, "frankjohn@gmail.com",
                 "+456987123",
                 LocalDate.of(1994, 5, 9),
-                new BigDecimal("10000"), List.of(HOUSE_2));
+                new BigDecimal("10000"), List.of(SECOND_HOUSE));
 
         Owner debtor2 = new Owner(2, "Alice", "Wonder",
                 28, FamilyStatus.SINGLE,
                 false, "alicewonder@gmail.com",
                 "+111111111", LocalDate.of(1997, 1, 1),
-                new BigDecimal("20000"), List.of(HOUSE_1));
+                new BigDecimal("20000"), List.of(FIRST_HOUSE));
 
         ownerService.addNewOwner(debtor);
         ownerService.addNewOwner(debtor2);
@@ -144,7 +144,7 @@ public class ScheduledTaskServiceIntegrationTest extends AbstractServiceTest {
                 false, "frankjohn@gmail.com",
                 "+456987123",
                 LocalDate.of(1994, 5, 9),
-                new BigDecimal("10000"), List.of(HOUSE_2));
+                new BigDecimal("10000"), List.of(SECOND_HOUSE));
 
         ownerService.addNewOwner(SINGLE_OWNER_WITHOUT_CHILDREN);
         ownerService.addNewOwner(debtor);

@@ -25,12 +25,13 @@ public class DebtorNotificationService {
 
     public boolean notifyAllDebtors() {
         List<Owner> debtors = this.ownerService.findDebtors();
-        Map<String, String> params = new HashMap<>();
-        params.put("numberOfDebtors", String.valueOf(debtors.size()));
 
         if (debtors.isEmpty()) {
             throw new NoDebtorsInDebtorListException("No debtors in debtor list");
         }
+
+        Map<String, String> params = new HashMap<>();
+        params.put("numberOfDebtors", String.valueOf(debtors.size()));
 
         for (Owner debtor : debtors) {
             params.put("firstName", debtor.getFirstName());

@@ -20,7 +20,7 @@ import java.util.List;
 import static java.util.Objects.requireNonNull;
 import static org.junit.jupiter.api.Assertions.*;
 
-public class TaxRateServiceIntegrationTests extends AbstractServiceTest {
+public class TaxRateServiceIntegrationTest extends AbstractServiceTest {
 
     @Autowired
     private TaxRateService taxRateService;
