@@ -4,6 +4,7 @@ import com.tvo.propertyregister.exception.InvalidTaxRateNumberException;
 import com.tvo.propertyregister.exception.NoSuchOwnerException;
 import com.tvo.propertyregister.exception.PropertyNotFoundException;
 import com.tvo.propertyregister.exception.UpdateOwnerFailedException;
+import com.tvo.propertyregister.model.BigDecimalWrapper;
 import com.tvo.propertyregister.model.TaxRate;
 import com.tvo.propertyregister.model.owner.FamilyStatus;
 import com.tvo.propertyregister.model.owner.Owner;
@@ -12,6 +13,7 @@ import com.tvo.propertyregister.model.property.PropertyType;
 import com.tvo.propertyregister.repository.OwnerRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -112,6 +114,11 @@ public class OwnerService {
         }
 
         return taxObligation.multiply(leeway);
+    }
+
+    @Cacheable(cacheNames = "owner:totalDebt")
+    public String countTotalDebt() {
+        return ownerRepository.countAllDebts().toPlainString();
     }
 
     private BigDecimal countBaseTax(Owner owner) {

@@ -57,15 +57,12 @@ public class TaxRateServiceIntegrationTest extends AbstractServiceTest {
         TaxRate newRate = new TaxRate(1, PropertyType.FLAT, new BigDecimal("11"));
         taxRateTestRepository.insertTaxRate(newRate);
 
-        //        List<TaxRate> actualRates = taxRateService.getAll();
-
         ResponseEntity<List<TaxRate>> actualRatesResponse = testRestTemplate.exchange(
                 "/v1/tax-rate",
                 HttpMethod.GET,
                 null,
                 new ParameterizedTypeReference<>() {
                 });
-
         List<TaxRate> actualRates = requireNonNull(actualRatesResponse.getBody());
 
         assertEquals(HttpStatus.OK, actualRatesResponse.getStatusCode());
@@ -78,9 +75,6 @@ public class TaxRateServiceIntegrationTest extends AbstractServiceTest {
 
         BigDecimal newTaxRate = new BigDecimal("10");
         HttpEntity<ChangeTaxRateRequest> request = new HttpEntity<>(new ChangeTaxRateRequest(newTaxRate));
-
-//        taxRateService.changeTax(PropertyType.FLAT, newTaxRate);
-
         ResponseEntity<BooleanResponseDto> response = testRestTemplate.exchange(
                 "/v1/tax-rate/" + PropertyType.FLAT,
                 HttpMethod.PATCH,
@@ -89,9 +83,7 @@ public class TaxRateServiceIntegrationTest extends AbstractServiceTest {
         );
 
         BooleanResponseDto booleanResponseDto = requireNonNull(response.getBody());
-
         List<TaxRate> actualRates = taxRateService.getAll();
-
         TaxRate actualFlatRate = actualRates.stream()
                 .filter(currentRate -> PropertyType.FLAT.equals(currentRate.getPropertyType()))
                 .findFirst()
@@ -107,24 +99,17 @@ public class TaxRateServiceIntegrationTest extends AbstractServiceTest {
         taxRateTestRepository.initTaxRates();
 
         BigDecimal newTaxRate = new BigDecimal("15");
-//        taxRateService.changeTax(PropertyType.HOUSE, newTaxRate);
-
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.setContentType(MediaType.APPLICATION_JSON);
-
         HttpEntity<ChangeTaxRateRequest> request = new HttpEntity<>(new ChangeTaxRateRequest(newTaxRate), httpHeaders);
-
         ResponseEntity<BooleanResponseDto> response = testRestTemplate.exchange(
                 "/v1/tax-rate/" + PropertyType.HOUSE,
                 HttpMethod.PATCH,
                 request,
                 BooleanResponseDto.class
         );
-
         BooleanResponseDto booleanResponseDto = requireNonNull(response.getBody());
-
         List<TaxRate> actualRates = taxRateService.getAll();
-
         TaxRate actualHouseRate = actualRates.stream()
                 .filter(currentRate -> PropertyType.HOUSE.equals(currentRate.getPropertyType()))
                 .findFirst()
@@ -140,21 +125,15 @@ public class TaxRateServiceIntegrationTest extends AbstractServiceTest {
         taxRateTestRepository.initTaxRates();
 
         BigDecimal newTaxRate = new BigDecimal("20");
-//        taxRateService.changeTax(PropertyType.OFFICE, newTaxRate);
-
         HttpEntity<ChangeTaxRateRequest> request = new HttpEntity<>(new ChangeTaxRateRequest(newTaxRate));
-
         ResponseEntity<BooleanResponseDto> response = testRestTemplate.exchange(
                 "/v1/tax-rate/" + PropertyType.OFFICE,
                 HttpMethod.PATCH,
                 request,
                 BooleanResponseDto.class
         );
-
         BooleanResponseDto booleanResponseDto = requireNonNull(response.getBody());
-
         List<TaxRate> actualRates = taxRateService.getAll();
-
         TaxRate actualOfficeRate = actualRates.stream()
                 .filter(currentRate -> PropertyType.OFFICE.equals(currentRate.getPropertyType()))
                 .findFirst()

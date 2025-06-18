@@ -2,6 +2,7 @@ package com.tvo.propertyregister.repository;
 
 import com.tvo.propertyregister.model.owner.Owner;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 public interface OwnerRepository {
@@ -18,4 +19,5 @@ public interface OwnerRepository {
 
     boolean remove(int id);
 
+    BigDecimal countAllDebts();
 }

@@ -14,6 +14,8 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 
+import java.math.BigDecimal;
+import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
 
@@ -40,14 +42,7 @@ public class MongoDbOwnerRepository implements OwnerRepository {
 
     @Override
     public List<Owner> findDebtors() {
-        Aggregation aggregation = Aggregation.newAggregation(
-                Aggregation.match(Criteria.where("taxesDebt").gt("0")),
-                Aggregation.project("id", "firstName", "lastName", "age", "familyStatus", "hasChildren", "email", "phoneNumber", "birthday", "properties")
-                        .andExpression("toDouble(taxesDebt)").as("taxesDebt")
-        );
-
-        AggregationResults<Owner> results = mongoTemplate.aggregate(aggregation, OWNERS_COLLECTION, Owner.class);
-        return results.getMappedResults();
+        return findAllDebtors();
     }
 
 
@@ -82,6 +77,32 @@ public class MongoDbOwnerRepository implements OwnerRepository {
         DeleteResult result = mongoTemplate.remove(criteria, Owner.class, OWNERS_COLLECTION);
 
         return result.getDeletedCount() > 0;
+    }
+
+    @Override
+    public BigDecimal countAllDebts() {
+        var allDebtors = findAllDebtors();
+        try {
+            // emulating high load operation
+            Thread.sleep(Duration.ofSeconds(1));
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
+        return allDebtors.stream()
+                .map(Owner::getTaxesDebt)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    private List<Owner> findAllDebtors() {
+        Aggregation aggregation = Aggregation.newAggregation(
+                Aggregation.match(Criteria.where("taxesDebt").gt("0")),
+                Aggregation.project("id", "firstName", "lastName", "age", "familyStatus", "hasChildren", "email", "phoneNumber", "birthday", "properties")
+                        .andExpression("toDouble(taxesDebt)").as("taxesDebt")
+        );
+
+        AggregationResults<Owner> results = mongoTemplate.aggregate(aggregation, OWNERS_COLLECTION, Owner.class);
+        return results.getMappedResults();
     }
 
     private int getNextOwnerId() {

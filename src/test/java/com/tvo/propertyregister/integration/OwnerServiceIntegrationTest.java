@@ -33,24 +33,6 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class OwnerServiceIntegrationTest extends AbstractServiceTest {
 
-    @Autowired
-    private OwnerService ownerService;
-
-    @Autowired
-    private OwnerTestRepository ownerTestRepository;
-
-    @Autowired
-    private PropertyService propertyService;
-
-    @Autowired
-    private PropertyTestRepository propertyTestRepository;
-
-    @Autowired
-    private TaxRateTestRepository taxRateTestRepository;
-
-    @Autowired
-    private TestRestTemplate restTemplate;
-
     private static final int INVALID_ID = -1;
 
     private static final Property FLAT = new Property(
@@ -65,6 +47,7 @@ public class OwnerServiceIntegrationTest extends AbstractServiceTest {
             LocalDate.of(2020, 4, 10),
             LocalDate.of(2012, 1, 9),
             PropertyCondition.GOOD);
+
     private static final Property SECOND_HOUSE = new Property(3, PropertyType.HOUSE, "Prague", "Evropska 6",
             300, 10, new BigDecimal("1000000"),
             LocalDate.of(2023, 4, 10),
@@ -92,25 +75,39 @@ public class OwnerServiceIntegrationTest extends AbstractServiceTest {
             LocalDate.of(1994, 5, 9),
             new BigDecimal("10000.0"), List.of(SECOND_HOUSE));
 
-    private static final List<TaxRate> taxRates = List.of(
-            new TaxRate(1, PropertyType.FLAT, new BigDecimal("6")),
-            new TaxRate(2, PropertyType.HOUSE, new BigDecimal("8")),
-            new TaxRate(3, PropertyType.OFFICE, new BigDecimal("13"))
-    );
+    @Autowired
+    private OwnerService ownerService;
+
+    @Autowired
+    private OwnerTestRepository ownerTestRepository;
+
+    @Autowired
+    private PropertyService propertyService;
+
+    @Autowired
+    private TaxRateTestRepository taxRateTestRepository;
+
+    @Autowired
+    private TestRestTemplate restTemplate;
 
     @DynamicPropertySource
     static void setProperties(DynamicPropertyRegistry registry) {
         registry.add("spring.data.mongodb.host", MONGO_DB_CONTAINER::getHost);
         registry.add("spring.data.mongodb.port", MONGO_DB_CONTAINER::getFirstMappedPort);
+
+        registry.add("spring.cache.redis.host", REDIS_CONTAINER::getHost);
+        registry.add("spring.cache.redis.port", REDIS_CONTAINER::getFirstMappedPort);
     }
 
     @BeforeAll
     public static void startContainer() {
         MONGO_DB_CONTAINER.start();
+        REDIS_CONTAINER.start();
     }
 
     @AfterAll
     public static void stopContainer() {
+        REDIS_CONTAINER.stop();
         MONGO_DB_CONTAINER.stop();
     }
 
@@ -123,6 +120,7 @@ public class OwnerServiceIntegrationTest extends AbstractServiceTest {
     public void cleanUp() {
         ownerTestRepository.clear();
         taxRateTestRepository.clear();
+        flushAllCache();
     }
 
     @Test
@@ -603,5 +601,118 @@ public class OwnerServiceIntegrationTest extends AbstractServiceTest {
         ErrorDto error = requireNonNull(countTaxResponse.getBody());
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, countTaxResponse.getStatusCode());
         assertTrue(error.detail().contains("Invalid number of tax rates"));
+    }
+
+    @Test
+    void should_count_debt_for_all_owners() {
+        Owner firstOwner = new Owner(1, "John", "Smith",
+                30, FamilyStatus.SINGLE,
+                true, "johnsmith@gmail.com",
+                "+456987123",
+                LocalDate.of(1994, 8, 9),
+                new BigDecimal("15000.0"), List.of(FLAT));
+        Owner secondOwner = new Owner(2, "Linda", "Johnson",
+                39, FamilyStatus.MARRIED,
+                true, "lindajohnson@gmail.com",
+                "+123456789",
+                LocalDate.of(1986, 8, 9),
+                new BigDecimal("0"), List.of(FIRST_HOUSE));
+        Owner thirdOwner = new Owner(3, "Frank", "John",
+                30, FamilyStatus.SINGLE,
+                false, "frankjohn@gmail.com",
+                "+456987123",
+                LocalDate.of(1994, 5, 9),
+                new BigDecimal("10000.0"), List.of(SECOND_HOUSE));
+
+        ownerService.addNewOwner(firstOwner);
+        ownerService.addNewOwner(secondOwner);
+        ownerService.addNewOwner(thirdOwner);
+
+        ResponseEntity<BigDecimal> response = restTemplate.exchange(
+                "/v1/owners/totalDebt",
+                HttpMethod.GET,
+                null,
+                BigDecimal.class
+        );
+
+        BigDecimal actualTotalDebt = requireNonNull(response.getBody());
+        BigDecimal expectedTotalDebt = firstOwner.getTaxesDebt()
+                .add(secondOwner.getTaxesDebt())
+                .add(thirdOwner.getTaxesDebt());
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(expectedTotalDebt, actualTotalDebt);
+    }
+
+    @Test
+    void should_return_zero_if_there_is_no_debtors() {
+        Owner firstOwner = new Owner(1, "John", "Smith",
+                30, FamilyStatus.SINGLE,
+                true, "johnsmith@gmail.com",
+                "+456987123",
+                LocalDate.of(1994, 8, 9),
+                new BigDecimal("0"), List.of(FLAT));
+        Owner secondOwner = new Owner(2, "Linda", "Johnson",
+                39, FamilyStatus.MARRIED,
+                true, "lindajohnson@gmail.com",
+                "+123456789",
+                LocalDate.of(1986, 8, 9),
+                new BigDecimal("0"), List.of(FIRST_HOUSE));
+
+        ownerService.addNewOwner(firstOwner);
+        ownerService.addNewOwner(secondOwner);
+
+        ResponseEntity<BigDecimal> response = restTemplate.exchange(
+                "/v1/owners/totalDebt",
+                HttpMethod.GET,
+                null,
+                BigDecimal.class
+        );
+
+        BigDecimal actualTotalDebt = requireNonNull(response.getBody());
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(BigDecimal.ZERO, actualTotalDebt);
+    }
+
+    @Test
+    void should_count_debt_for_all_owners_when_there_is_only_one_debtor() {
+        Owner firstOwner = new Owner(1, "John", "Smith",
+                30, FamilyStatus.SINGLE,
+                true, "johnsmith@gmail.com",
+                "+456987123",
+                LocalDate.of(1994, 8, 9),
+                new BigDecimal("0"), List.of(FLAT));
+        Owner secondOwner = new Owner(2, "Linda", "Johnson",
+                39, FamilyStatus.MARRIED,
+                true, "lindajohnson@gmail.com",
+                "+123456789",
+                LocalDate.of(1986, 8, 9),
+                new BigDecimal("0"), List.of(FIRST_HOUSE));
+        Owner thirdOwner = new Owner(3, "Frank", "John",
+                30, FamilyStatus.SINGLE,
+                false, "frankjohn@gmail.com",
+                "+456987123",
+                LocalDate.of(1994, 5, 9),
+                new BigDecimal("10000.0"), List.of(SECOND_HOUSE));
+
+        ownerService.addNewOwner(firstOwner);
+        ownerService.addNewOwner(secondOwner);
+        ownerService.addNewOwner(thirdOwner);
+
+        ResponseEntity<BigDecimal> response = restTemplate.exchange(
+                "/v1/owners/totalDebt",
+                HttpMethod.GET,
+                null,
+                BigDecimal.class
+        );
+
+        BigDecimal actualTotalDebt = requireNonNull(response.getBody());
+        BigDecimal expectedTotalDebt = firstOwner.getTaxesDebt()
+                .add(secondOwner.getTaxesDebt())
+                .add(thirdOwner.getTaxesDebt());
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(expectedTotalDebt, actualTotalDebt);
     }
 }

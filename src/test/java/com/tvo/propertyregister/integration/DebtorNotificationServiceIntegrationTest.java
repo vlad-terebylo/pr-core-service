@@ -2,7 +2,6 @@ package com.tvo.propertyregister.integration;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.tvo.propertyregister.exception.DontHaveTaxDebtsException;
 import com.tvo.propertyregister.integration.config.repository.OwnerTestRepository;
 import com.tvo.propertyregister.model.dto.BooleanResponseDto;
 import com.tvo.propertyregister.model.dto.EmailEventDto;
@@ -45,9 +44,6 @@ public class DebtorNotificationServiceIntegrationTest extends AbstractServiceTes
 
     @Autowired
     private RabbitTemplate rabbitTemplate;
-
-    @Autowired
-    private DebtorNotificationService debtorNotificationService;
 
     @Autowired
     private EmailSender emailSender;

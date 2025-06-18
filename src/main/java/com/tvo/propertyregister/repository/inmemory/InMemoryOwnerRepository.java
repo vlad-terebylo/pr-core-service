@@ -84,4 +84,9 @@ public class InMemoryOwnerRepository implements OwnerRepository {
     public boolean remove(int id) {
         return this.allOwners.removeIf(owner -> owner.getId() == id);
     }
+
+    @Override
+    public BigDecimal countAllDebts() {
+        return null;
+    }
 }

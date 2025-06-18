@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
@@ -82,4 +83,10 @@ public class OwnerController {
     public ResponseEntity<TaxObligationResponseDto> countTaxObligation(@PathVariable int ownerId) {
         return ResponseEntity.ok(new TaxObligationResponseDto(this.ownerService.countTaxObligation(ownerId)));
     }
+
+    @GetMapping("/totalDebt")
+    public ResponseEntity<BigDecimal> countTotalNumberOfDebts() {
+        return ResponseEntity.ok(new BigDecimal(ownerService.countTotalDebt()));
+    }
+
 }

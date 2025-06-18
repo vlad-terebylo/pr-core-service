@@ -14,6 +14,11 @@ spring:
     mongodb:
       database: property-register
       host: localhost
+  cache:
+    type: redis
+    redis:
+      host: localhost
+      port: 6379
 
 server:
   port: 2005

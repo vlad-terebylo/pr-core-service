@@ -128,13 +128,13 @@ public class ScheduledTaskServiceIntegrationTest extends AbstractServiceTest {
 
         scheduledTaskService.recountDebtForDebtors();
 
-        Owner updatedDebtor1 = ownerService.getOwnerById(debtor.getId());
-        BigDecimal expectedDebt1 = new BigDecimal("10500.0");
-        assertEquals(expectedDebt1, updatedDebtor1.getTaxesDebt());
+        Owner firstUpdatedDebtor = ownerService.getOwnerById(debtor.getId());
+        BigDecimal firstExpectedDebtor = new BigDecimal("10500.0");
+        assertEquals(firstExpectedDebtor, firstUpdatedDebtor.getTaxesDebt());
 
-        Owner updatedDebtor2 = ownerService.getOwnerById(debtor2.getId());
-        BigDecimal expectedDebt2 = new BigDecimal("21000.0");
-        assertEquals(expectedDebt2, updatedDebtor2.getTaxesDebt());
+        Owner secondUpdatedDebtor = ownerService.getOwnerById(debtor2.getId());
+        BigDecimal secondExpectedDebtor = new BigDecimal("21000.0");
+        assertEquals(secondExpectedDebtor, secondUpdatedDebtor.getTaxesDebt());
     }
 
     @Test
